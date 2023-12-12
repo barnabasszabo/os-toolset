@@ -1,0 +1,40 @@
+{
+  "name": "os-menubar-outlook-web",
+  "version": "1.0.1",
+  "main": "main.js",
+  "private": true,
+  "homepage": "http://szabobarnabas.hu",
+  "author": {
+    "name": "Barnabas Szabo",
+    "email": "git@szabobarnabas.hu"
+  },
+  "build": {
+    "appId": "hu.szabobarnabas.os-menubar-outlook-web",
+    "productName": "Outlook web Menubar",
+    "mac": {
+      "category": "public.app-category.developer-tools"
+    },
+    "dmg": {
+      "icon": false
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Development"
+    }
+  },
+  "scripts": {
+    "start": "electron .",
+    "postinstall": "electron-builder install-app-deps",
+    "build": "electron-builder --publish always ",
+    "release": "npm run build"
+  },
+  "devDependencies": {
+    "electron": "^16.0.0",
+    "electron-builder": "^22.13.1"
+  },
+  "dependencies": {
+    "menubar": "^9.1.0"
+  }
+}

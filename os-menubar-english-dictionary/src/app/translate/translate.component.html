@@ -1,0 +1,109 @@
+<nav class="navbar fixed-top navbar-light bg-light">
+  <div class="container-fluid">
+    <h2 class="navbar-brand"><i class="fas fa-language mr-2"></i>OS Menubar Translator  <a (click)="settingBlockDisplay = !settingBlockDisplay"><i class="ml-1 fas fa-cog"></i></a></h2>
+
+    <div class="container-fluid mt-2 mb-3 alert alert-secondary" *ngIf="settingBlockDisplay">
+      <form name="settings" class="container-fluid">
+
+        <div class="col-12">
+          <label for="inputAddress" class="form-label">Your language (locale code)</label>
+          <input type="text" class="form-control" name="foreignLang" placeholder="your short locale code like: 'de'" [(ngModel)]="foreignLang" (ngModelChange)="setForeignLang($event)">
+        </div>
+
+        <div class="col-12 mt-3 mb-1"><hr /></div>
+        <div class="col-12 mb-1">
+          Please register yourself into <strong>https://developer.oxforddictionaries.com</strong>, and type your private api data!
+        </div>
+
+        <div class="col-md-6 mt-3">
+          <label for="inputEmail4" class="form-label">Oxford app id</label>
+          <input type="text" class="form-control" name="appid" placeholder="Your app id like '1fed5fcb'" [(ngModel)]="oxfordAPI.app_id" (ngModelChange)="setOxfordAppId($event)">
+        </div>
+        <div class="col-md-6 mt-3">
+          <label for="inputPassword4" class="form-label">Oxford app key</label>
+          <input type="text" class="form-control" name="appkey" placeholder="Your app key like: '28e8c08ecd604d62bf8df77cc9a67d23'" [(ngModel)]="oxfordAPI.app_key" (ngModelChange)="setOxfordAppKey($event)">
+        </div>
+
+      </form>
+    </div>
+
+    <form name="newTaskForm" class="container-fluid" (ngSubmit)="onSearch()">
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <button type="button" class="btn btn-outline-info" (click)="replaceLang()">
+            <span *ngIf="transFromEng">{{sourceLang}} => {{foreignLang}}</span>
+            <span *ngIf="!transFromEng">{{foreignLang}} => {{sourceLang}}</span>
+          </button>
+        </div>
+        <input type="text" class="form-control" placeholder="Type any string" name="taskDesc" #taskTextElem appAutofocus [(ngModel)]="searchText" [disabled]="onSubmitted">
+        <div class="input-group-append">
+          <button type="submit" class="btn btn-outline-success" [disabled]="onSubmitted">Search</button>
+        </div>
+      </div>
+    </form>
+
+  </div>
+</nav>
+
+<div class="content container-fluid" *ngIf="lastText">
+
+  <div class="d-flex justify-content-center">
+    <h1 class="float-left">{{lastText}}</h1>
+    <h2 class="mt-2 ml-3 mr-3 float-left fas fa-arrow-right"></h2>
+    <h1 class="float-left translated-value" *ngIf="gTransRes && gTransRes.text">{{gTransRes.text}}</h1>
+  </div>
+
+  <div class="" *ngIf="oxTransRes && oxTransRes.results">
+
+    <div *ngFor="let result of oxTransRes.results">
+      <div *ngFor="let lexicalEntrie of result.lexicalEntries; let i=index">
+
+        <hr *ngIf="i !== 0" />
+
+        <div class="overall clearfix mb-1">
+          <h2 class="float-left">{{lexicalEntrie.text}}</h2> <span class="float-left ml-2 mt-2 lexical-category">{{lexicalEntrie.lexicalCategory.text}}</span>
+        </div>
+
+        <div *ngFor="let entrie of lexicalEntrie.entries">
+
+          <div *ngFor="let pronunciation of entrie.pronunciations" class="mb-3">
+            <audio id="player" controls class="hidden">
+              <source [src]="pronunciation.audioFile" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+            <i class="fas fa-volume-up clickable text-info" onclick="document.getElementById('player').play()"></i>
+            / <span class="phoneticSpelling">{{pronunciation.phoneticSpelling}}</span> / ({{ pronunciation.dialects.join(',') }})
+          </div>
+
+          <div *ngFor="let sense of entrie.senses" class="mt-1">
+            <ng-container *ngFor="let def of sense.definitions">
+              <i class="fas fa-star mr-2 text-primary"></i><span>{{def}}</span>
+            </ng-container>
+            <ul class="ml-2">
+              <li *ngFor="let example of sense.examples">{{example.text}} <span *ngIf="example.notes">({{ noteAsText(example.notes) }})</span></li>
+            </ul>
+
+            <div *ngIf="sense.subsenses" class="mb-3">
+                <ngb-accordion #acc="ngbAccordion">
+                  <ngb-panel id="toggle-1" title="Extra">
+                    <ng-template ngbPanelContent>
+                      <ng-container *ngFor="let subsense of sense.subsenses">
+                        <ng-container *ngFor="let def of subsense.definitions">
+                          <i class="fas fa-star mr-2 text-primary"></i><span>{{def}}</span>
+                        </ng-container>
+                        <ul class="ml-2">
+                          <li *ngFor="let example of subsense.examples">{{example.text}} <span *ngIf="example.notes">({{ noteAsText(example.notes) }})</span></li>
+                        </ul>
+                      </ng-container>
+                    </ng-template>
+                  </ngb-panel>
+                </ngb-accordion>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
