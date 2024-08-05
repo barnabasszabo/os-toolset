@@ -6,7 +6,7 @@ const mb = menubar({
     browserWindow: { height: 1024, width: 1500 }
 });
 
-mb.app.dock.hide();
+// mb.app.dock.hide();
 
 mb.on('ready', () => {
     mb.tray.setImage( path.join(__dirname, 'tray-icon.png') );
