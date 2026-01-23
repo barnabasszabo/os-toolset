@@ -2,17 +2,6 @@ const https = require('https');
 const msalConfig = require('./msal-config');
 const authService = require('./auth-service');
 const DateUtils = require('./date-utils');
-const moment = require('moment-timezone');
-
-// Timezone getter beállítása - a calendar service main process-ben fut
-// Ezért IPC-n keresztül kell kérni a timezone-t
-let timezoneGetter = null;
-
-// Exportáljuk a setter-t, hogy a main.js beállíthassa
-function setTimezoneGetter(getter) {
-  timezoneGetter = getter;
-  DateUtils.setTimezoneGetter(getter);
-}
 
 class CalendarService {
   constructor() {
@@ -25,7 +14,6 @@ class CalendarService {
       await authService.ensureInitialized();
       const token = await authService.getAccessToken();
       if (!token) {
-        console.log('No access token available for calendar');
         return [];
       }
 
@@ -81,30 +69,13 @@ class CalendarService {
       // Feldolgozzuk az eseményeket
       // A Microsoft Graph API UTC időzónában adja vissza a dátumokat
       // Rögtön konvertáljuk a beállított timezone-ba, és úgy tároljuk
-      const processedEvents = events.map(event => {
-        // A dateTime UTC formátumban van, először UTC-ként értelmezzük
-        const startDateUTC = new Date(event.start.dateTime);
-        const endDateUTC = new Date(event.end.dateTime);
-        
-        // Konvertáljuk a beállított timezone-ba
-        // moment.utc() jelzi, hogy a dátum UTC, majd .tz() konvertálja a beállított timezone-ba
-        const timezone = DateUtils.getTimezone();
-        const startMoment = moment.utc(startDateUTC).tz(timezone);
-        const endMoment = moment.utc(endDateUTC).tz(timezone);
-        
-        // Tároljuk a Date objektumokat úgy, hogy azok a beállított timezone szerinti időt reprezentálják
-        // A moment.toDate() egy Date objektumot ad vissza, ami a timezone szerinti időt reprezentálja UTC-ként
-        // De mivel a moment már a timezone-ban van, a toDate() a helyes UTC timestamp-et adja vissza
-        // Fontos: a Date objektum UTC timestamp-et tartalmaz, de a moment objektum a timezone-ban van
-        // Amikor ezt a Date objektumot újra beolvassuk moment.tz(date, timezone)-nal, a helyes időt kapjuk
-        const startDate = startMoment.toDate();
-        const endDate = endMoment.toDate();
-        
-        console.log(`[CalendarService] Processing event "${event.subject}":`);
-        console.log(`  API start (UTC): ${event.start.dateTime}`);
-        const timezoneStart = DateUtils.getDateComponents(startDate);
-        console.log(`  ${DateUtils.getTimezone()} start: ${timezoneStart.year}-${String(timezoneStart.month + 1).padStart(2, '0')}-${String(timezoneStart.day).padStart(2, '0')} ${String(timezoneStart.hour).padStart(2, '0')}:${String(timezoneStart.minute).padStart(2, '0')}`);
-        
+      const processedEvents = events.map((event) => {
+        const startDate = DateUtils.fromUtcToTimeZone(event.start?.dateTime);
+        const endDate = DateUtils.fromUtcToTimeZone(event.end?.dateTime);
+        const duration = startDate && endDate
+          ? Math.round((endDate.getTime() - startDate.getTime()) / 60000)
+          : 0;
+
         return {
           id: event.id,
           subject: event.subject || '(Névtelen esemény)',
@@ -116,7 +87,7 @@ class CalendarService {
           } : null,
           onlineMeetingUrl: event.onlineMeeting?.joinUrl || null,
           webLink: event.webLink || null,
-          duration: Math.round((endDate.getTime() - startDate.getTime()) / 60000), // percben
+          duration: duration, // percben
           attendeesCount: event.attendees ? event.attendees.length : 0,
           attendees: event.attendees ? event.attendees.map(attendee => ({
             name: attendee.emailAddress?.name || 'Ismeretlen',
@@ -126,24 +97,16 @@ class CalendarService {
       });
 
       this.events = processedEvents;
-      console.log(`[CalendarService] Loaded ${processedEvents.length} events from API`);
-      
-      // Részletes log minden meetingről
-      processedEvents.forEach((event, index) => {
-        // Az események már a beállított timezone-ban vannak, csak formázzuk
-        const startMoment = DateUtils.toTimezone(event.start);
-        const endMoment = DateUtils.toTimezone(event.end);
-        console.log(`[CalendarService] Event ${index + 1}:`, {
-          subject: event.subject,
-          start: startMoment.format('YYYY-MM-DD HH:mm'),
-          end: endMoment.format('YYYY-MM-DD HH:mm'),
-          duration: `${event.duration} perc`,
-          organizer: event.organizer?.name || 'N/A',
-          attendeesCount: event.attendeesCount,
-          hasTeams: !!event.onlineMeetingUrl
-        });
-      });
-      
+
+      const transformedEvents = processedEvents.map((event) => ({
+        id: event.id,
+        subject: event.subject,
+        start: event.start,
+        end: event.end
+      }));
+
+      console.log('[CalendarService] Transformed events:', transformedEvents);
+
       return processedEvents;
     } catch (error) {
       console.error('Error fetching calendar events:', error);
@@ -182,10 +145,6 @@ class CalendarService {
     const threeMinsAgo = DateUtils.subtractMinutes(now, 3);
     const nowDate = DateUtils.toDate(now);
     
-    const todayStartComp = DateUtils.getDateComponents(todayStart);
-    const endDateComp = DateUtils.getDateComponents(endMoment);
-    console.log(`[CalendarService] getEventsByDay: Filtering events from ${todayStartComp.year}-${String(todayStartComp.month + 1).padStart(2, '0')}-${String(todayStartComp.day).padStart(2, '0')} to ${endDateComp.year}-${String(endDateComp.month + 1).padStart(2, '0')}-${String(endDateComp.day).padStart(2, '0')}`);
-    
     this.events.forEach(event => {
       // Minden eseményt tartalmazunk, ami a mai + 3 napon belül kezdődik
       // (Az elmúlt meetingeket is tartalmazza, csak a renderer rejti el őket)
@@ -206,15 +165,6 @@ class CalendarService {
         }
         eventsByDay[dayKey].push(event);
         
-        const isPast = event.end < nowDate;
-        const startMoment = DateUtils.toTimezone(event.start);
-        const endMoment = DateUtils.toTimezone(event.end);
-        console.log(`[CalendarService] Event "${event.subject}" (start: ${startMoment.format('YYYY-MM-DD HH:mm')}, end: ${endMoment.format('YYYY-MM-DD HH:mm')}, isPast: ${isPast}) added to day ${dayKey}`);
-      } else {
-        const startMoment = DateUtils.toTimezone(event.start);
-        const todayStartMoment = DateUtils.toTimezone(todayStartDate);
-        const endDateMoment = DateUtils.toTimezone(endDate);
-        console.log(`[CalendarService] Event "${event.subject}" filtered out: start=${startMoment.format('YYYY-MM-DD HH:mm')}, todayStart=${todayStartMoment.format('YYYY-MM-DD HH:mm')}, endDate=${endDateMoment.format('YYYY-MM-DD HH:mm')}`);
       }
     });
 
@@ -235,7 +185,6 @@ class CalendarService {
         events: eventsByDay[dayKey] || []
       });
       
-      console.log(`[CalendarService] Day ${i + 1} (${dayKey}): ${eventsByDay[dayKey]?.length || 0} events`);
     }
     
     return result;

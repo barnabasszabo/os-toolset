@@ -11,24 +11,6 @@ let authState = {
   profilePhoto: null
 };
 
-// Helper function to log to main process
-function logToMain(level, ...args) {
-  if (window.app && window.app.log) {
-    window.app.log(level, ...args);
-  }
-  // Also log to console for DevTools
-  console.log(...args);
-}
-
-// Override console.log to also send to main process
-const originalConsoleLog = console.log;
-console.log = function(...args) {
-  originalConsoleLog.apply(console, args);
-  if (window.app && window.app.log) {
-    window.app.log('log', ...args);
-  }
-};
-
 // DOM
 const widgetContainer = document.getElementById('widgetContainer');
 const contentViewMain = document.getElementById('contentViewMain');
@@ -71,9 +53,6 @@ const colorYellowFrom = document.getElementById('colorYellowFrom');
 const colorYellowTo = document.getElementById('colorYellowTo');
 const colorRedFrom = document.getElementById('colorRedFrom');
 const colorRedTo = document.getElementById('colorRedTo');
-const settingsTimezoneWrap = document.getElementById('settingsTimezoneWrap');
-const settingsTimezone = document.getElementById('settingsTimezone');
-const settingsTimezoneTime = document.getElementById('settingsTimezoneTime');
 
 // Calendar
 let calendarEvents = [];
@@ -176,37 +155,6 @@ function saveColorSettings() {
 
 // Betöltjük az indításkor
 loadColorSettings();
-
-// Timezone beállítások
-let timezoneSettings = {
-  timezone: 'CET' // 'CET' vagy 'GMT'
-};
-
-// Betöltjük a localStorage-ból a timezone beállításokat
-function loadTimezoneSettings() {
-  try {
-    const saved = localStorage.getItem('timezoneSettings');
-    if (saved) {
-      timezoneSettings = JSON.parse(saved);
-    }
-  } catch (e) {
-    console.error('Error loading timezone settings:', e);
-  }
-}
-
-// Elmentjük a localStorage-ba a timezone beállításokat
-function saveTimezoneSettings() {
-  try {
-    localStorage.setItem('timezoneSettings', JSON.stringify(timezoneSettings));
-    // Frissítjük a dátum kezelést az új timezone-nal
-    // A DateUtils automatikusan betölti a localStorage-ból
-  } catch (e) {
-    console.error('Error saving timezone settings:', e);
-  }
-}
-
-// Betöltjük az indításkor
-loadTimezoneSettings();
 
 // Dátum kezelés központi modul használata (DateUtils betöltve a HTML-ből)
 
@@ -405,12 +353,10 @@ let isRendering = false; // Flag a renderelés megakadályozására
 async function renderCalendarList() {
   // Megakadályozzuk a párhuzamos renderelést
   if (isRendering) {
-    console.log('[Renderer] renderCalendarList: Already rendering, skipping...');
     return;
   }
   
   isRendering = true;
-  console.log('[Renderer] renderCalendarList: Starting render...');
   
   try {
     // Frissítés gomb láthatósága
@@ -429,8 +375,6 @@ async function renderCalendarList() {
     // Töröljük a teljes listát először
     itemList.innerHTML = '';
     
-    console.log(`[Renderer] renderCalendarList: Received ${eventsByDay.length} days from getEventsByDay()`);
-    
     // Mindig 4 napot mutatunk: ma, holnap, holnapután, holnaputánután
     // A getEventsByDay() már visszaadja ezt a 4 napot fix sorrendben
     
@@ -441,7 +385,6 @@ async function renderCalendarList() {
       const dayData = eventsByDay[dayIndex];
       // A dátumok már a beállított timezone-ban vannak, csak formázzuk
       const dayMoment = DateUtils.toTimezone(dayData.date);
-      console.log(`[Renderer] Rendering day ${dayIndex + 1}: ${dayMoment.format('YYYY-MM-DD')} with ${dayData.events.length} events`);
       // Nap header
       const daySection = document.createElement('div');
       daySection.className = 'calendar-day-section';
@@ -457,13 +400,6 @@ async function renderCalendarList() {
       
       // Rendezzük a nap eseményeit hátralévő idő szerint (növekvő sorrendben: -3 perc, majd növekvő)
       // Az események már a beállított timezone-ban vannak tárolva
-      console.log(`[Renderer] Day ${dayIndex + 1}: Before sort - ${dayData.events.length} events`);
-      dayData.events.forEach((event, idx) => {
-        const diffMins = DateUtils.diffMinutes(event.start);
-        const startMoment = DateUtils.toTimezone(event.start);
-        console.log(`[Renderer]   Event ${idx + 1}: "${event.subject}" - Start: ${startMoment.format('YYYY-MM-DD HH:mm')}, DiffMins: ${diffMins}`);
-      });
-      
       const sortedEvents = [...dayData.events].sort((a, b) => {
         // Elsődleges: hátralévő percek szerint növekvő sorrendben
         const aDiffMins = DateUtils.diffMinutes(a.start);
@@ -482,13 +418,6 @@ async function renderCalendarList() {
         return a.start - b.start;
       });
       
-      console.log(`[Renderer] Day ${dayIndex + 1}: After sort - ${sortedEvents.length} events`);
-      sortedEvents.forEach((event, idx) => {
-        const diffMins = DateUtils.diffMinutes(event.start);
-        const startMoment = DateUtils.toTimezone(event.start);
-        console.log(`[Renderer]   Sorted ${idx + 1}: "${event.subject}" - Start: ${startMoment.format('YYYY-MM-DD HH:mm')}, DiffMins: ${diffMins}, Will render: YES`);
-      });
-      
       // Meetingek betöltése szervező és résztvevő képekkel
       // Dátum összehasonlítás a beállított timezone szerint
       const isToday = DateUtils.isSameDay(dayData.date);
@@ -496,9 +425,6 @@ async function renderCalendarList() {
       let renderedCount = 0;
       for (const event of sortedEvents) {
         // Az események már a beállított timezone-ban vannak tárolva
-        const startMoment = DateUtils.toTimezone(event.start);
-        console.log(`[Renderer] Rendering event "${event.subject}" (${startMoment.format('YYYY-MM-DD HH:mm')})`);
-        
         // Ellenőrizzük, hogy elmúlt-e a meeting (-3 percnél régebbi)
         const diffMins = DateUtils.diffMinutes(event.start);
         const isPast = DateUtils.isPast(event.start);
@@ -525,19 +451,14 @@ async function renderCalendarList() {
         if (meetingItem) {
           dayList.appendChild(meetingItem);
           renderedCount++;
-          console.log(`[Renderer] Successfully rendered event "${event.subject}" (isPast: ${isPast})`);
         } else {
           console.error(`[Renderer] ERROR: renderMeetingItem returned null for "${event.subject}"`);
         }
       }
       
-      console.log(`[Renderer] Day ${dayIndex + 1}: Rendered ${renderedCount} out of ${sortedEvents.length} events`);
-      
       daySection.appendChild(dayList);
       itemList.appendChild(daySection);
     }
-    
-    console.log(`[Renderer] renderCalendarList: Completed rendering ${eventsByDay.length} days`);
   } catch (e) {
     console.error('[Renderer] Error rendering calendar:', e);
     itemList.innerHTML = '<li class="list-group-item" style="text-align: center; color: #dc3545;">Hiba a naptár betöltésekor</li>';
@@ -727,7 +648,6 @@ async function refreshCalendar(showLoading = false) {
     // Frissítjük a naptár adatokat az API-ból (mindig friss adatokat kérünk)
     // A getEvents() mindig meghívja a getCalendarEvents()-et, ami új API hívást indít
     calendarEvents = await window.calendar.getEvents();
-    console.log(`Calendar refreshed: ${calendarEvents.length} events loaded`);
     // Újraszámoljuk a hátralévő időket és újrarendezzük mindkét view-ban
     await updateBarViewWithNextMeeting();
     if (isExpanded && !isSettingsOpen) {
@@ -800,14 +720,12 @@ function updateSettingsAuthUI() {
   settingsUserWrap.style.display = 'none';
   settingsThemeWrap.style.display = 'none';
   settingsColorWrap.style.display = 'none';
-  settingsTimezoneWrap.style.display = 'none';
   settingsAuthLoading.style.display = 'none';
   
   if (authState.isAuthenticated) {
     settingsUserWrap.style.display = 'flex';
     settingsThemeWrap.style.display = 'block';
     settingsColorWrap.style.display = 'block';
-    settingsTimezoneWrap.style.display = 'block';
     
     // Téma beállítás betöltése
     if (themeSettings.theme === 'light') {
@@ -824,14 +742,6 @@ function updateSettingsAuthUI() {
     colorYellowTo.value = colorSettings.yellow.to;
     colorRedFrom.value = colorSettings.red.from;
     colorRedTo.value = colorSettings.red.to;
-    
-    // Timezone beállítás betöltése
-    settingsTimezone.value = timezoneSettings.timezone || 'CET';
-    
-    // Frissítjük az időt (késleltetve, hogy biztosan létezzen az elem)
-    setTimeout(() => {
-      updateTimezoneTime();
-    }, 100);
     
     settingsUserName.textContent = authState.userInfo?.displayName || authState.userInfo?.userPrincipalName || '–';
     settingsUserEmail.textContent = authState.userInfo?.userPrincipalName || authState.account?.username || '–';
@@ -976,7 +886,6 @@ btnTogglePast.addEventListener('click', (e) => {
     meeting.style.display = showPastMeetings ? 'flex' : 'none';
   });
   
-  console.log(`[Renderer] Toggle past meetings: ${showPastMeetings ? 'show' : 'hide'} (${pastMeetings.length} meetings)`);
 });
 
 // Kilépés gomb (header-ben és settings-ben is)
@@ -1050,40 +959,6 @@ settingsColorEnabled.addEventListener('change', async () => {
   });
 });
 
-// Idő frissítése a beállított timezone szerint
-function updateTimezoneTime() {
-  if (settingsTimezoneTime) {
-    const now = DateUtils.now();
-    const timeStr = DateUtils.formatTime(now);
-    const dateStr = now.format('YYYY-MM-DD');
-    settingsTimezoneTime.textContent = `${dateStr} ${timeStr}`;
-    console.log('[Renderer] Timezone time updated:', settingsTimezoneTime.textContent);
-  } else {
-    console.log('[Renderer] settingsTimezoneTime element not found');
-  }
-}
-
-// Timezone változtatása
-settingsTimezone.addEventListener('change', async () => {
-  timezoneSettings.timezone = settingsTimezone.value;
-  saveTimezoneSettings();
-  // Szinkronizáljuk a main process-szel (csak értesítés, a tényleges tárolás localStorage-ban van)
-  if (window.timezone && window.timezone.set) {
-    await window.timezone.set(timezoneSettings.timezone);
-  }
-  // Frissítjük az időt
-  updateTimezoneTime();
-  // Frissítjük a UI-t az új timezone-nal
-  await refreshUIWithColorSettings();
-});
-
-// Idő frissítése másodpercenként, ha a beállítások oldal nyitva van
-setInterval(() => {
-  if (isSettingsOpen && settingsTimezoneTime && settingsTimezoneTime.parentElement && settingsTimezoneTime.parentElement.style.display !== 'none') {
-    updateTimezoneTime();
-  }
-}, 1000);
-
 // Main process állapot
 window.widget.onState((expanded) => {
   isExpanded = expanded;
@@ -1124,7 +999,6 @@ window.auth.onStateChanged(async (state) => {
 
 // Calendar events updated handler
 window.calendar.onEventsUpdated(async (events) => {
-  console.log(`[Renderer] onEventsUpdated: ${events.length} events received`);
   calendarEvents = events;
   await updateBarViewWithNextMeeting();
   if (isExpanded && !isSettingsOpen) {

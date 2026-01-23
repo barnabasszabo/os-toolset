@@ -1,36 +1,18 @@
-// Böngésző-kompatibilis dátum kezelő modul dinamikus timezone-nal
+// Böngésző-kompatibilis dátum kezelő modul fix timezone-nal
 // moment-timezone-t használ, amit CDN-ről töltünk be
 
-// Alapértelmezett timezone
-const DEFAULT_TIMEZONE = 'Europe/Budapest';
-
-// Timezone mapping: GMT -> UTC, CET -> Europe/Budapest
-const TIMEZONE_MAP = {
-  'GMT': 'UTC',
-  'CET': 'Europe/Budapest'
-};
+const timeZone = 'Europe/Budapest';
 
 /**
- * Központi dátum kezelő modul dinamikus timezone-nal (böngésző verzió)
+ * Központi dátum kezelő modul fix timezone-nal (böngésző verzió)
  */
 const DateUtils = {
   /**
-   * Visszaadja a jelenlegi timezone-t localStorage-ból vagy alapértelmezett
+   * Visszaadja a használt timezone-t
    * @returns {string}
    */
   getTimezone() {
-    try {
-      const saved = localStorage.getItem('timezoneSettings');
-      if (saved) {
-        const settings = JSON.parse(saved);
-        if (settings.timezone && TIMEZONE_MAP[settings.timezone]) {
-          return TIMEZONE_MAP[settings.timezone];
-        }
-      }
-    } catch (e) {
-      console.error('Error loading timezone settings:', e);
-    }
-    return DEFAULT_TIMEZONE;
+    return timeZone;
   },
 
   /**
@@ -49,15 +31,6 @@ const DateUtils = {
   toTimezone(date) {
     if (!date) return null;
     return moment.tz(date, this.getTimezone());
-  },
-
-  /**
-   * @deprecated Használd a toTimezone() függvényt helyette
-   * @param {Date} date - A konvertálandó dátum
-   * @returns {moment.Moment}
-   */
-  toBudapest(date) {
-    return this.toTimezone(date);
   },
 
   /**

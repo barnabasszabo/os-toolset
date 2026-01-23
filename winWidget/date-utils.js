@@ -1,64 +1,17 @@
 const moment = require('moment-timezone');
 
-// Alapértelmezett timezone
-const DEFAULT_TIMEZONE = 'Europe/Budapest';
-
-// Timezone mapping: GMT -> UTC, CET -> Europe/Budapest
-const TIMEZONE_MAP = {
-  'GMT': 'UTC',
-  'CET': 'Europe/Budapest'
-};
-
-// Timezone cache - a main process-ben nincs localStorage, ezért cache-ben tároljuk
-let cachedTimezone = null;
-let timezoneGetter = null;
+const timeZone = 'Europe/Budapest';
 
 /**
- * Központi dátum kezelő modul dinamikus timezone-nal
- * A timezone localStorage-ból van betöltve (renderer process-ben)
- * A main process-ben IPC-n keresztül kérjük el
+ * Központi dátum kezelő modul fix timezone-nal
  */
 class DateUtils {
   /**
-   * Beállítja a timezone getter függvényt (IPC-n keresztül)
-   * @param {Function} getter - Függvény, ami visszaadja a timezone-t
-   */
-  static setTimezoneGetter(getter) {
-    timezoneGetter = getter;
-    cachedTimezone = null; // Invalidate cache
-  }
-
-  /**
-   * Visszaadja a jelenlegi timezone-t localStorage-ból vagy alapértelmezett
+   * Visszaadja a használt timezone-t
    * @returns {string}
    */
   static getTimezone() {
-    // Ha van getter (main process), használjuk azt
-    if (timezoneGetter) {
-      try {
-        if (cachedTimezone === null) {
-          const userTimezone = timezoneGetter();
-          if (userTimezone && TIMEZONE_MAP[userTimezone]) {
-            cachedTimezone = TIMEZONE_MAP[userTimezone];
-          } else {
-            cachedTimezone = DEFAULT_TIMEZONE;
-          }
-        }
-        return cachedTimezone;
-      } catch (e) {
-        console.error('Error getting timezone:', e);
-        return DEFAULT_TIMEZONE;
-      }
-    }
-    // Fallback: alapértelmezett
-    return DEFAULT_TIMEZONE;
-  }
-
-  /**
-   * Invalidate timezone cache (ha változott a beállítás)
-   */
-  static invalidateTimezoneCache() {
-    cachedTimezone = null;
+    return timeZone;
   }
 
   /**
@@ -80,15 +33,6 @@ class DateUtils {
   }
 
   /**
-   * @deprecated Használd a toTimezone() függvényt helyette
-   * @param {Date} date - A konvertálandó dátum
-   * @returns {moment.Moment}
-   */
-  static toBudapest(date) {
-    return this.toTimezone(date);
-  }
-
-  /**
    * Létrehoz egy moment objektumot a beállított timezone-ban
    * @param {number|string|Date|moment.Moment} input - Dátum input
    * @returns {moment.Moment}
@@ -96,6 +40,16 @@ class DateUtils {
   static create(input) {
     if (!input) return moment.tz(this.getTimezone());
     return moment.tz(input, this.getTimezone());
+  }
+
+  /**
+   * UTC dátum string konvertálása timezone Date objektummá
+   * @param {string} dateTime - UTC dátum string
+   * @returns {Date|null}
+   */
+  static fromUtcToTimeZone(dateTime) {
+    if (!dateTime) return null;
+    return moment.utc(dateTime).tz(this.getTimezone()).toDate();
   }
 
   /**

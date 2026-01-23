@@ -457,61 +457,6 @@ ipcMain.handle('calendar:getUserPhoto', async (event, email) => {
   }
 });
 
-// Timezone settings handlers - localStorage-ból kezelve a renderer-ben
-// A main process csak továbbítja a kérést, a tényleges tárolás localStorage-ban van
-ipcMain.handle('timezone:get', async (event) => {
-  // Kérjük el a renderer-től a localStorage-ból
-  try {
-    const result = await event.sender.executeJavaScript(`
-      (function() {
-        try {
-          const saved = localStorage.getItem('timezoneSettings');
-          if (saved) {
-            const settings = JSON.parse(saved);
-            return settings.timezone || 'CET';
-          }
-          return 'CET';
-        } catch (e) {
-          return 'CET';
-        }
-      })()
-    `);
-    // Frissítsük a cache-t a DateUtils-ben
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      const DateUtils = require('./date-utils');
-      DateUtils.invalidateTimezoneCache();
-    }
-    return result;
-  } catch (error) {
-    console.error('Error getting timezone from localStorage:', error);
-    return 'CET'; // default
-  }
-});
-
-ipcMain.handle('timezone:set', async (event, timezone) => {
-  // Mentsük el a renderer localStorage-ba
-  try {
-    await event.sender.executeJavaScript(`
-      (function() {
-        try {
-          const settings = { timezone: ${JSON.stringify(timezone)} };
-          localStorage.setItem('timezoneSettings', JSON.stringify(settings));
-          return { success: true };
-        } catch (e) {
-          return { success: false, error: e.message };
-        }
-      })()
-    `);
-    // Frissítsük a cache-t a DateUtils-ben
-    const DateUtils = require('./date-utils');
-    DateUtils.invalidateTimezoneCache();
-    return { success: true };
-  } catch (error) {
-    console.error('Error saving timezone to localStorage:', error);
-    return { success: false, error: error.message };
-  }
-});
-
 app.whenReady().then(async () => {
   // Set up callback for auth state restoration
   authService.setStateRestoredCallback((state) => {
@@ -524,38 +469,6 @@ app.whenReady().then(async () => {
   await authService.ensureInitialized();
   
   createWindow();
-  
-  // Set up timezone getter for DateUtils (main process)
-  // Várjuk meg, amíg a window betöltődik
-  if (mainWindow) {
-    mainWindow.webContents.once('did-finish-load', () => {
-      const DateUtils = require('./date-utils');
-      DateUtils.setTimezoneGetter(async () => {
-        try {
-          if (mainWindow && !mainWindow.isDestroyed()) {
-            const result = await mainWindow.webContents.executeJavaScript(`
-              (function() {
-                try {
-                  const saved = localStorage.getItem('timezoneSettings');
-                  if (saved) {
-                    const settings = JSON.parse(saved);
-                    return settings.timezone || 'CET';
-                  }
-                  return 'CET';
-                } catch (e) {
-                  return 'CET';
-                }
-              })()
-            `);
-            return result;
-          }
-        } catch (e) {
-          console.error('Error getting timezone:', e);
-        }
-        return 'CET';
-      });
-    });
-  }
   
   // Start calendar auto-refresh
   calendarService.startAutoRefresh((events) => {

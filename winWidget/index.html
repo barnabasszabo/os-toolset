@@ -648,59 +648,6 @@
             background-color: #dc3545;
         }
         
-        .settings-timezone-wrap {
-            margin-top: 16px;
-            margin-bottom: 24px;
-            padding-top: 16px;
-        }
-        
-        .settings-timezone-row {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .settings-timezone-label {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-        
-        .settings-timezone-select {
-            padding: 6px 10px;
-            font-size: 13px;
-            border: 1px solid var(--border-secondary);
-            border-radius: 4px;
-            background-color: var(--bg-card);
-            color: var(--text-primary);
-            cursor: pointer;
-            -webkit-app-region: no-drag;
-        }
-        
-        .settings-timezone-select:focus {
-            outline: none;
-            border-color: #6264a7;
-        }
-        
-        .settings-timezone-time-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 12px;
-            font-size: 13px;
-        }
-        
-        .settings-timezone-time-label {
-            font-weight: 500;
-            color: var(--text-secondary);
-        }
-        
-        .settings-timezone-time-value {
-            font-family: 'Courier New', monospace;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        
         /* Program bezárása gomb - bal alsó, piros outline stílus */
         .settings-quit-wrap {
             flex: 1;
@@ -1012,19 +959,6 @@
                                         </label>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="settings-timezone-wrap" id="settingsTimezoneWrap" style="display: none;">
-                            <div class="settings-timezone-row">
-                                <label class="settings-timezone-label">Időzóna:</label>
-                                <select id="settingsTimezone" class="settings-timezone-select">
-                                    <option value="CET">CET (Közép-európai idő)</option>
-                                    <option value="GMT">GMT (Greenwich Mean Time)</option>
-                                </select>
-                            </div>
-                            <div class="settings-timezone-time-row">
-                                <div class="settings-timezone-time-label">Jelenlegi idő:</div>
-                                <div class="settings-timezone-time-value" id="settingsTimezoneTime">--:--</div>
                             </div>
                         </div>
                         <div class="settings-loading" id="settingsAuthLoading" style="display: none;">Betöltés…</div>

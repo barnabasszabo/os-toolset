@@ -48,7 +48,3 @@ contextBridge.exposeInMainWorld('calendar', {
   }
 });
 
-contextBridge.exposeInMainWorld('timezone', {
-  get: () => ipcRenderer.invoke('timezone:get'),
-  set: (timezone) => ipcRenderer.invoke('timezone:set', timezone)
-});
