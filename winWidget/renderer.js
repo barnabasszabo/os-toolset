@@ -26,6 +26,7 @@ const barViewParticipants = document.getElementById('barViewParticipants');
 const barViewSeparator2 = document.getElementById('barViewSeparator2');
 const barViewTeams = document.getElementById('barViewTeams');
 const btnTeamsBar = document.getElementById('btnTeamsBar');
+const btnOutlookWeb = document.getElementById('btnOutlookWeb');
 const itemList = document.getElementById('itemList');
 const btnCollapse = document.getElementById('btnCollapse');
 const btnRefresh = document.getElementById('btnRefresh');
@@ -203,9 +204,27 @@ function createTimeUntilElement(startDate, className = 'meeting-time-until') {
   return timeUntilEl;
 }
 
+function updateBarViewAlertState(timeUntilEl) {
+  barViewData.classList.remove('barView-alert-red', 'barView-alert-yellow');
+  if (!timeUntilEl) return;
+  if (timeUntilEl.classList.contains('time-until-red')) {
+    barViewData.classList.add('barView-alert-red');
+    return;
+  }
+  if (timeUntilEl.classList.contains('time-until-yellow')) {
+    barViewData.classList.add('barView-alert-yellow');
+  }
+}
+
 function getInitials(name) {
   if (!name) return '?';
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+async function handleOpenOutlookCalendar() {
+  if (window.outlook && window.outlook.openCalendar) {
+    await window.outlook.openCalendar();
+  }
 }
 
 async function loadUserPhoto(email) {
@@ -474,6 +493,7 @@ async function updateBarViewWithNextMeeting() {
   barViewTimeUntil.classList.remove('show');
   barViewSeparator.classList.remove('show');
   btnTeamsBar.onclick = null;
+  updateBarViewAlertState(null);
   
   // Töröljük a részleteket
   barViewTime.textContent = '';
@@ -546,6 +566,7 @@ async function updateBarViewWithNextMeeting() {
     barViewTimeUntil.classList.add('show');
     barViewSeparator.classList.add('show');
   }
+  updateBarViewAlertState(timeUntilEl);
   
   // Időpont és hossz
   barViewTime.textContent = DateUtils.formatTime(nextEvent.start);
@@ -870,6 +891,11 @@ btnCloseSettings.addEventListener('click', (e) => {
 btnRefresh.addEventListener('click', async (e) => {
   e.stopPropagation();
   await refreshCalendar(true);
+});
+
+btnOutlookWeb.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  await handleOpenOutlookCalendar();
 });
 
 // Toggle past meetings

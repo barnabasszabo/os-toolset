@@ -4,6 +4,7 @@ const fs = require('fs');
 const https = require('https');
 const authService = require('./auth-service');
 const calendarService = require('./calendar-service');
+const outlookWindowService = require('./outlook-window-service');
 
 // Enable hot reload in development
 let reloader;
@@ -391,6 +392,11 @@ ipcMain.handle('auth:getProfilePhoto', async () => {
 
 ipcMain.handle('app:quit', () => {
   app.quit();
+});
+
+ipcMain.handle('outlook:openCalendar', () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  outlookWindowService.openOutlookCalendarWindow(mainWindow.getBounds());
 });
 
 // Calendar IPC handlers

@@ -48,3 +48,7 @@ contextBridge.exposeInMainWorld('calendar', {
   }
 });
 
+contextBridge.exposeInMainWorld('outlook', {
+  openCalendar: () => ipcRenderer.invoke('outlook:openCalendar')
+});
+
