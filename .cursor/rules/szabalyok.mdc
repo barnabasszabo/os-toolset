@@ -1,0 +1,13 @@
+---
+alwaysApply: true
+---
+
+A winWidget mappába dolgozz, a többi könyvtár project már deprecated, csak akkor dolgozz ha direkt kérés van.
+
+Minden új npm dependency telepítése során az 'npm install --save' vagy 'npm install --save-dev' parancsot használj!
+
+Mindig tagold a kódot, ne legyen 25 sornál több egy függvény.
+Minden esetben törekedj kód ujrafelhasználásra, Azonosíts, és emelj ki meglévő kódokat közös képességbe.
+Ha ugyan olyan műveletet kell többször más-más helyeken elvégezni, akkor service rétegben keress rá központi új funkciót.
+Mindig service layert használj működési logikára, ami különüljön el a megjelenítéstől. több rétegű alkalmazást, struktúrát használj!
+

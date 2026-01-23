@@ -1,0 +1,255 @@
+/* Téma-specifikus CSS változók */
+
+/* Sötét téma (alapértelmezett) */
+.theme-dark {
+    --bg-primary: #212529;
+    --bg-secondary: #1e2226;
+    --bg-tertiary: #2a2e32;
+    --bg-card: #343a40;
+    --bg-hover: #495057;
+    --bg-input: #212529;
+    --bg-avatar: #495057;
+    
+    --text-primary: white;
+    --text-secondary: #adb5bd;
+    --text-tertiary: #6c757d;
+    
+    --border-primary: #343a40;
+    --border-secondary: #495057;
+    --border-tertiary: #dee2e6;
+    
+    --separator-color: #495057;
+}
+
+/* Világos téma */
+.theme-light {
+    --bg-primary: #f8f9fa;
+    --bg-secondary: #e9ecef;
+    --bg-tertiary: #ffffff;
+    --bg-card: #ffffff;
+    --bg-hover: #f8f9fa;
+    --bg-input: #ffffff;
+    --bg-avatar: #e9ecef;
+    
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-tertiary: #495057;
+    
+    --border-primary: #dee2e6;
+    --border-secondary: #dee2e6;
+    --border-tertiary: #dee2e6;
+    
+    --separator-color: #dee2e6;
+}
+
+/* Alkalmazás a változókra */
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.contentView {
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-primary);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.calendar-day-header {
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-secondary);
+    color: var(--text-secondary);
+}
+
+.list-group-item {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-secondary);
+}
+
+.list-group-item:hover {
+    background-color: var(--bg-hover);
+}
+
+.meeting-subject {
+    color: var(--text-primary);
+}
+
+.meeting-details-wrapper,
+.meeting-details {
+    color: var(--text-secondary);
+}
+
+.meeting-time-until {
+    color: var(--text-primary);
+}
+
+.meeting-separator {
+    color: var(--separator-color);
+}
+
+.meeting-more-count {
+    color: var(--text-secondary);
+}
+
+.meeting-user-avatar {
+    background-color: var(--bg-avatar);
+}
+
+.meeting-user-avatar.monogram {
+    color: var(--text-primary);
+}
+
+.contentView-settings .card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-secondary);
+}
+
+.contentView-settings .card-header {
+    border-bottom: 1px solid var(--border-secondary);
+    color: var(--text-primary);
+}
+
+.settings-theme-label,
+.settings-user-name {
+    color: var(--text-primary);
+}
+
+.settings-user-email,
+.settings-loading,
+.settings-theme-options,
+.theme-option,
+.settings-color-label,
+.color-input-group {
+    color: var(--text-secondary);
+}
+
+.settings-user-avatar {
+    background-color: var(--bg-avatar);
+}
+
+.settings-user-avatar.monogram {
+    color: var(--text-primary);
+}
+
+.barView {
+    background-color: var(--bg-primary);
+}
+
+.barView-title {
+    color: var(--text-primary);
+}
+
+.barView-details,
+.barView-time,
+.barView-duration {
+    color: var(--text-secondary);
+}
+
+.barView-time-until {
+    color: var(--text-primary);
+}
+
+.barView-separator {
+    background-color: var(--separator-color);
+}
+
+.barView-user-avatar {
+    background-color: var(--bg-avatar);
+}
+
+.barView-user-avatar.monogram {
+    color: var(--text-primary);
+}
+
+.barView-more-count {
+    color: var(--text-secondary);
+}
+
+.barView-ops {
+    background-color: var(--bg-tertiary);
+    border-left: 1px solid var(--border-secondary);
+}
+
+.barView-op {
+    color: var(--text-secondary);
+}
+
+.barView-op:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-hover);
+}
+
+.barView-teams {
+    border-left: 1px solid var(--border-secondary);
+}
+
+.color-input {
+    border: 1px solid var(--border-secondary);
+    background-color: var(--bg-input);
+    color: var(--text-primary);
+}
+
+.settings-theme-wrap,
+.settings-color-wrap {
+    border-top: 1px solid var(--border-secondary);
+}
+
+.color-input-label span:first-child {
+    color: var(--text-primary);
+}
+
+.btn-close-settings {
+    border: 1px solid #ffc107;
+    color: #ffc107;
+}
+
+.btn-close-settings:hover {
+    background-color: #ffc107;
+    color: var(--text-primary);
+}
+
+.theme-light .btn-close-settings:hover {
+    color: #212529;
+}
+
+.refresh-header {
+    background-color: var(--bg-secondary);
+}
+
+.btn-settings-header {
+    border: 1px solid var(--border-secondary);
+    background-color: var(--bg-card);
+    color: var(--text-secondary);
+}
+
+.btn-settings-header:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.btn-refresh {
+    border: 1px solid var(--border-secondary);
+    background-color: var(--bg-card);
+    color: var(--text-secondary);
+}
+
+.btn-refresh:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.btn-toggle-past {
+    border: 1px solid var(--border-secondary);
+    background-color: var(--bg-card);
+    color: var(--text-secondary);
+}
+
+.btn-toggle-past:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.btn-toggle-past.active {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--text-primary);
+}

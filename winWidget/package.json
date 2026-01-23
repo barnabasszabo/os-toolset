@@ -1,0 +1,25 @@
+{
+  "name": "win-widget",
+  "version": "1.0.0",
+  "description": "Windows 11 always-on-top widget",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "electron",
+    "widget",
+    "windows"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^31.3.1",
+    "electron-reloader": "^1.2.3"
+  },
+  "dependencies": {
+    "@azure/msal-node": "^2.6.0",
+    "@azure/msal-node-extensions": "^1.2.0",
+    "moment-timezone": "^0.6.0"
+  }
+}

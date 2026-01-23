@@ -1,0 +1,329 @@
+const moment = require('moment-timezone');
+
+// Alapértelmezett timezone
+const DEFAULT_TIMEZONE = 'Europe/Budapest';
+
+// Timezone mapping: GMT -> UTC, CET -> Europe/Budapest
+const TIMEZONE_MAP = {
+  'GMT': 'UTC',
+  'CET': 'Europe/Budapest'
+};
+
+// Timezone cache - a main process-ben nincs localStorage, ezért cache-ben tároljuk
+let cachedTimezone = null;
+let timezoneGetter = null;
+
+/**
+ * Központi dátum kezelő modul dinamikus timezone-nal
+ * A timezone localStorage-ból van betöltve (renderer process-ben)
+ * A main process-ben IPC-n keresztül kérjük el
+ */
+class DateUtils {
+  /**
+   * Beállítja a timezone getter függvényt (IPC-n keresztül)
+   * @param {Function} getter - Függvény, ami visszaadja a timezone-t
+   */
+  static setTimezoneGetter(getter) {
+    timezoneGetter = getter;
+    cachedTimezone = null; // Invalidate cache
+  }
+
+  /**
+   * Visszaadja a jelenlegi timezone-t localStorage-ból vagy alapértelmezett
+   * @returns {string}
+   */
+  static getTimezone() {
+    // Ha van getter (main process), használjuk azt
+    if (timezoneGetter) {
+      try {
+        if (cachedTimezone === null) {
+          const userTimezone = timezoneGetter();
+          if (userTimezone && TIMEZONE_MAP[userTimezone]) {
+            cachedTimezone = TIMEZONE_MAP[userTimezone];
+          } else {
+            cachedTimezone = DEFAULT_TIMEZONE;
+          }
+        }
+        return cachedTimezone;
+      } catch (e) {
+        console.error('Error getting timezone:', e);
+        return DEFAULT_TIMEZONE;
+      }
+    }
+    // Fallback: alapértelmezett
+    return DEFAULT_TIMEZONE;
+  }
+
+  /**
+   * Invalidate timezone cache (ha változott a beállítás)
+   */
+  static invalidateTimezoneCache() {
+    cachedTimezone = null;
+  }
+
+  /**
+   * Visszaadja a jelenlegi időt a beállított timezone-ban
+   * @returns {moment.Moment}
+   */
+  static now() {
+    return moment.tz(this.getTimezone());
+  }
+
+  /**
+   * Konvertál egy Date objektumot moment objektummá a beállított timezone-ban
+   * @param {Date} date - A konvertálandó dátum
+   * @returns {moment.Moment}
+   */
+  static toTimezone(date) {
+    if (!date) return null;
+    return moment.tz(date, this.getTimezone());
+  }
+
+  /**
+   * @deprecated Használd a toTimezone() függvényt helyette
+   * @param {Date} date - A konvertálandó dátum
+   * @returns {moment.Moment}
+   */
+  static toBudapest(date) {
+    return this.toTimezone(date);
+  }
+
+  /**
+   * Létrehoz egy moment objektumot a beállított timezone-ban
+   * @param {number|string|Date|moment.Moment} input - Dátum input
+   * @returns {moment.Moment}
+   */
+  static create(input) {
+    if (!input) return moment.tz(this.getTimezone());
+    return moment.tz(input, this.getTimezone());
+  }
+
+  /**
+   * Visszaadja a mai nap kezdetét (éjfél) a beállított timezone-ban
+   * @param {Date|moment.Moment} date - Opcionális dátum, alapértelmezetten ma
+   * @returns {moment.Moment}
+   */
+  static dayStart(date = null) {
+    const m = date ? this.toTimezone(date) : this.now();
+    return m.clone().startOf('day');
+  }
+
+  /**
+   * Visszaadja a nap végét (23:59:59.999) a beállított timezone-ban
+   * @param {Date|moment.Moment} date - Opcionális dátum, alapértelmezetten ma
+   * @returns {moment.Moment}
+   */
+  static dayEnd(date = null) {
+    const m = date ? this.toTimezone(date) : this.now();
+    return m.clone().endOf('day');
+  }
+
+  /**
+   * Hozzáad napokat egy dátumhoz
+   * @param {Date|moment.Moment} date - Kiindulási dátum
+   * @param {number} days - Hozzáadandó napok száma
+   * @returns {moment.Moment}
+   */
+  static addDays(date, days) {
+    const m = this.toTimezone(date);
+    return m.clone().add(days, 'days');
+  }
+
+  /**
+   * Kivon napokat egy dátumból
+   * @param {Date|moment.Moment} date - Kiindulási dátum
+   * @param {number} days - Kivonandó napok száma
+   * @returns {moment.Moment}
+   */
+  static subtractDays(date, days) {
+    const m = this.toTimezone(date);
+    return m.clone().subtract(days, 'days');
+  }
+
+  /**
+   * Hozzáad perceket egy dátumhoz
+   * @param {Date|moment.Moment} date - Kiindulási dátum
+   * @param {number} minutes - Hozzáadandó percek száma
+   * @returns {moment.Moment}
+   */
+  static addMinutes(date, minutes) {
+    const m = this.toTimezone(date);
+    return m.clone().add(minutes, 'minutes');
+  }
+
+  /**
+   * Kivon perceket egy dátumból
+   * @param {Date|moment.Moment} date - Kiindulási dátum
+   * @param {number} minutes - Kivonandó percek száma
+   * @returns {moment.Moment}
+   */
+  static subtractMinutes(date, minutes) {
+    const m = this.toTimezone(date);
+    return m.clone().subtract(minutes, 'minutes');
+  }
+
+  /**
+   * Hozzáad órákat egy dátumhoz
+   * @param {Date|moment.Moment} date - Kiindulási dátum
+   * @param {number} hours - Hozzáadandó órák száma
+   * @returns {moment.Moment}
+   */
+  static addHours(date, hours) {
+    const m = this.toTimezone(date);
+    return m.clone().add(hours, 'hours');
+  }
+
+  /**
+   * Kiszámolja a percek különbségét két dátum között
+   * @param {Date|moment.Moment} date1 - Első dátum
+   * @param {Date|moment.Moment} date2 - Második dátum (alapértelmezetten most)
+   * @returns {number} Percek különbsége (date1 - date2)
+   */
+  static diffMinutes(date1, date2 = null) {
+    const m1 = this.toTimezone(date1);
+    const m2 = date2 ? this.toTimezone(date2) : this.now();
+    return m1.diff(m2, 'minutes');
+  }
+
+  /**
+   * Formázza a dátumot idő formátumban (HH:mm)
+   * @param {Date|moment.Moment} date - A formázandó dátum
+   * @returns {string}
+   */
+  static formatTime(date) {
+    const m = this.toTimezone(date);
+    return m.format('HH:mm');
+  }
+
+  /**
+   * Formázza a dátumot dátum formátumban
+   * @param {Date|moment.Moment} date - A formázandó dátum
+   * @param {number} dayIndex - Nap index (0 = ma, 1 = holnap, stb.)
+   * @returns {string}
+   */
+  static formatDate(date, dayIndex = null) {
+    const m = this.toTimezone(date);
+    const dateStr = m.format('dddd, MMMM Do');
+    
+    if (dayIndex === 0) {
+      return `Ma (${dateStr})`;
+    }
+    
+    return dateStr;
+  }
+
+  /**
+   * Formázza az időtartamot percek alapján
+   * @param {number} minutes - Percek száma
+   * @returns {string}
+   */
+  static formatDuration(minutes) {
+    if (minutes < 60) {
+      return `${minutes} perc`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours} óra ${mins} perc` : `${hours} óra`;
+  }
+
+  /**
+   * Formázza a hátralévő időt
+   * @param {Date|moment.Moment} startDate - Kezdési dátum
+   * @returns {string|null} Formázott idő vagy null, ha már túl régen volt
+   */
+  static formatTimeUntil(startDate) {
+    const diffMins = this.diffMinutes(startDate);
+    
+    // -3 percig mutatjuk (mert lehet késve megy be)
+    if (diffMins < -3) {
+      return null;
+    }
+    
+    if (diffMins < 60) {
+      return `${diffMins}p`;
+    }
+    
+    const hours = Math.floor(diffMins / 60);
+    return `${hours}ó`;
+  }
+
+  /**
+   * Összehasonlítja, hogy két dátum ugyanazon a napon van-e a beállított timezone-ban
+   * @param {Date|moment.Moment} date1 - Első dátum
+   * @param {Date|moment.Moment} date2 - Második dátum (alapértelmezetten ma)
+   * @returns {boolean}
+   */
+  static isSameDay(date1, date2 = null) {
+    const m1 = this.toTimezone(date1);
+    const m2 = date2 ? this.toTimezone(date2) : this.now();
+    return m1.isSame(m2, 'day');
+  }
+
+  /**
+   * Konvertál moment objektumot JavaScript Date objektummá (UTC-ként)
+   * @param {moment.Moment} momentObj - A konvertálandó moment objektum
+   * @returns {Date}
+   */
+  static toDate(momentObj) {
+    if (!momentObj) return null;
+    return momentObj.toDate();
+  }
+
+  /**
+   * Konvertál moment objektumot ISO stringgé
+   * @param {moment.Moment} momentObj - A konvertálandó moment objektum
+   * @returns {string}
+   */
+  static toISOString(momentObj) {
+    if (!momentObj) return null;
+    return momentObj.toISOString();
+  }
+
+  /**
+   * Visszaadja a dátum komponenseit a beállított timezone-ban
+   * @param {Date|moment.Moment} date - A dátum
+   * @returns {Object} {year, month, day, hour, minute, second}
+   */
+  static getDateComponents(date) {
+    const m = this.toTimezone(date);
+    return {
+      year: m.year(),
+      month: m.month(), // 0-11
+      day: m.date(),
+      hour: m.hour(),
+      minute: m.minute(),
+      second: m.second()
+    };
+  }
+
+  /**
+   * Ellenőrzi, hogy egy dátum a múltban van-e
+   * @param {Date|moment.Moment} date - Az ellenőrizendő dátum
+   * @param {number} thresholdMinutes - Küszöb percekben (alapértelmezetten -3)
+   * @returns {boolean}
+   */
+  static isPast(date, thresholdMinutes = -3) {
+    const diffMins = this.diffMinutes(date);
+    return diffMins < thresholdMinutes;
+  }
+
+  /**
+   * Ellenőrzi, hogy egy dátum a jövőben van-e
+   * @param {Date|moment.Moment} date - Az ellenőrizendő dátum
+   * @returns {boolean}
+   */
+  static isFuture(date) {
+    const diffMins = this.diffMinutes(date);
+    return diffMins > 0;
+  }
+
+  /**
+   * Visszaadja a timezone konstanst (kompatibilitás miatt)
+   * @returns {string}
+   */
+  static getTimezoneConstant() {
+    return this.getTimezone();
+  }
+}
+
+module.exports = DateUtils;
