@@ -4,7 +4,8 @@
   "description": "Windows 11 always-on-top widget",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder --win"
   },
   "keywords": [
     "electron",
@@ -13,8 +14,21 @@
   ],
   "author": "",
   "license": "MIT",
+  "build": {
+    "appId": "hu.barnabas.winwidget",
+    "productName": "WinWidget",
+    "files": [
+      "**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    }
+  },
   "devDependencies": {
     "electron": "^31.3.1",
+    "electron-builder": "^26.4.0",
     "electron-reloader": "^1.2.3"
   },
   "dependencies": {
