@@ -27,6 +27,9 @@ const barViewSeparator2 = document.getElementById('barViewSeparator2');
 const barViewTeams = document.getElementById('barViewTeams');
 const btnTeamsBar = document.getElementById('btnTeamsBar');
 const btnOutlookWeb = document.getElementById('btnOutlookWeb');
+const btnTimeWeb = document.getElementById('btnTimeWeb');
+const btnJiraClockwork = document.getElementById('btnJiraClockwork');
+const btnBarExpand = document.getElementById('btnBarExpand');
 const itemList = document.getElementById('itemList');
 const btnCollapse = document.getElementById('btnCollapse');
 const btnRefresh = document.getElementById('btnRefresh');
@@ -224,6 +227,26 @@ function getInitials(name) {
 async function handleOpenOutlookCalendar() {
   if (window.outlook && window.outlook.openCalendar) {
     await window.outlook.openCalendar();
+  }
+}
+
+async function handleOpenTimeWeb() {
+  if (window.timeWeb && window.timeWeb.open) {
+    await window.timeWeb.open();
+  }
+}
+
+async function handleOpenJiraClockwork() {
+  if (window.jiraClockwork && window.jiraClockwork.open) {
+    await window.jiraClockwork.open();
+  }
+}
+
+async function handleToggleBarExpand() {
+  if (window.widget && window.widget.toggleBarExpand) {
+    const isExpanded = await window.widget.toggleBarExpand();
+    widgetContainer.classList.toggle('barView-expanded', isExpanded);
+    btnBarExpand.textContent = isExpanded ? '<<' : '>>';
   }
 }
 
@@ -896,6 +919,21 @@ btnRefresh.addEventListener('click', async (e) => {
 btnOutlookWeb.addEventListener('click', async (e) => {
   e.stopPropagation();
   await handleOpenOutlookCalendar();
+});
+
+btnTimeWeb.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  await handleOpenTimeWeb();
+});
+
+btnJiraClockwork.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  await handleOpenJiraClockwork();
+});
+
+btnBarExpand.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  await handleToggleBarExpand();
 });
 
 // Toggle past meetings

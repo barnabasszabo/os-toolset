@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('widget', {
   toggle: () => ipcRenderer.invoke('widget:toggle'),
   getState: () => ipcRenderer.invoke('widget:getState'),
+  toggleBarExpand: () => ipcRenderer.invoke('widget:toggleBarExpand'),
   onState: (callback) => {
     ipcRenderer.on('widget:state-changed', (event, isExpanded) => {
       callback(isExpanded);
@@ -50,5 +51,13 @@ contextBridge.exposeInMainWorld('calendar', {
 
 contextBridge.exposeInMainWorld('outlook', {
   openCalendar: () => ipcRenderer.invoke('outlook:openCalendar')
+});
+
+contextBridge.exposeInMainWorld('timeWeb', {
+  open: () => ipcRenderer.invoke('timeweb:open')
+});
+
+contextBridge.exposeInMainWorld('jiraClockwork', {
+  open: () => ipcRenderer.invoke('jira:openClockwork')
 });
 

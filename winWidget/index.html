@@ -708,6 +708,7 @@
             display: flex;
             flex-direction: row;
             align-items: center;
+            -webkit-app-region: drag;
         }
         
         .barView-time-until {
@@ -718,6 +719,7 @@
             display: none;
             align-items: center;
             justify-content: center;
+            -webkit-app-region: no-drag;
         }
         
         .barView-time-until.show {
@@ -819,6 +821,7 @@
             display: none;
             align-items: center;
             justify-content: center;
+            -webkit-app-region: no-drag;
         }
         
         .barView-teams.show {
@@ -842,12 +845,23 @@
             background-color: #4f52a0;
         }
         
-        .barView-web {
-            width: 48px;
+        .barView-web-actions {
             border-left: 1px solid var(--border-secondary);
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 4px;
+            padding: 0 6px;
+            -webkit-app-region: no-drag;
+        }
+
+        .barView-actions-expanded {
+            display: none;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .barView-expanded .barView-actions-expanded {
+            display: flex;
         }
 
         .btn-outlook-web {
@@ -879,15 +893,18 @@
             display: block;
         }
 
-        .barView-ops {
-            width: 48px;
-            border-left: 1px solid var(--border-secondary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: move;
-            -webkit-app-region: drag;
+        .btn-time-web svg {
+            width: 18px;
+            height: 18px;
+            display: block;
         }
+
+        .btn-jira-web svg {
+            width: 18px;
+            height: 18px;
+            display: block;
+        }
+
     </style>
 </head>
 <body>
@@ -1033,17 +1050,31 @@
             <div class="barView-teams" id="barViewTeams">
                 <button class="btn-teams-bar" id="btnTeamsBar" title="Csatlakozás Teams meetinghez">Teams</button>
             </div>
-            <div class="barView-web">
-                <button class="btn-outlook-web" id="btnOutlookWeb" title="Outlook naptár megnyitása" aria-label="Outlook naptár megnyitása">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <rect x="2" y="5" width="9" height="14" rx="1.5" fill="#0a66c2"></rect>
-                        <rect x="9" y="4" width="13" height="16" rx="2" fill="#1a82e2"></rect>
-                        <path d="M6.5 10.5h1.2l.9 1.5.9-1.5h1.2l-1.5 2.5 1.5 2.5H9.5l-.9-1.5-.9 1.5H6.5l1.5-2.5-1.5-2.5z" fill="#ffffff"></path>
-                    </svg>
-                </button>
-            </div>
-            <div class="barView-ops" title="Húzd a mozgatáshoz">
-                <span style="font-size: 14px; color: var(--text-secondary);">⋮⋮</span>
+            <div class="barView-web-actions">
+                <div class="btn-group" role="group" aria-label="Webview gombok" style="-webkit-app-region: no-drag;">
+                    <button class="btn-outlook-web" id="btnOutlookWeb" title="Outlook naptár megnyitása" aria-label="Outlook naptár megnyitása">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="2" y="5" width="9" height="14" rx="1.5" fill="#0a66c2"></rect>
+                            <rect x="9" y="4" width="13" height="16" rx="2" fill="#1a82e2"></rect>
+                            <path d="M6.5 10.5h1.2l.9 1.5.9-1.5h1.2l-1.5 2.5 1.5 2.5H9.5l-.9-1.5-.9 1.5H6.5l1.5-2.5-1.5-2.5z" fill="#ffffff"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="barView-actions-expanded">
+                    <button class="btn-outlook-web btn-time-web" id="btnTimeWeb" title="Trükk megnyitása" aria-label="Trükk megnyitása">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="9" fill="#10b981"></circle>
+                            <path d="M12 7v5l3 2" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
+                        </svg>
+                    </button>
+                    <button class="btn-outlook-web btn-jira-web" id="btnJiraClockwork" title="Jira clockwork megnyitása" aria-label="Jira clockwork megnyitása">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 6h7l2 3h7v9H11l-2-3H4z" fill="#0052cc"></path>
+                            <path d="M4 6h7l2 3h7" stroke="#ffffff" stroke-width="1.4" fill="none"></path>
+                        </svg>
+                    </button>
+                </div>
+                <button class="btn-outlook-web" id="btnBarExpand" title="További ikonok" aria-label="További ikonok">&gt;&gt;</button>
             </div>
         </div>
     </div>

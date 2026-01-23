@@ -5,6 +5,8 @@ const https = require('https');
 const authService = require('./auth-service');
 const calendarService = require('./calendar-service');
 const outlookWindowService = require('./outlook-window-service');
+const timeWindowService = require('./time-window-service');
+const jiraWindowService = require('./jira-window-service');
 
 // Enable hot reload in development
 let reloader;
@@ -26,10 +28,12 @@ if (isDevelopment) {
 
 let mainWindow = null;
 let isExpanded = false;
+let isBarExpanded = false;
 let isSettingsOpen = false;
 let savedPosition = null;
 
 const COLLAPSED_WIDTH = 480;
+const BAR_EXPANDED_EXTRA_WIDTH = 140;
 const COLLAPSED_HEIGHT = 50;
 const EXPANDED_WIDTH = 480;
 const EXPANDED_HEIGHT = 600;
@@ -80,7 +84,8 @@ function positionWindow(window, useSavedPosition = true) {
   if (!window) return;
   
   const currentHeight = isExpanded ? EXPANDED_HEIGHT : COLLAPSED_HEIGHT;
-  const currentWidth = isExpanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH;
+  const baseWidth = isExpanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH;
+  const currentWidth = isBarExpanded ? baseWidth + BAR_EXPANDED_EXTRA_WIDTH : baseWidth;
   
   let x, y;
   
@@ -247,7 +252,8 @@ ipcMain.handle('widget:toggle', () => {
   isExpanded = !isExpanded;
   
   const newHeight = isExpanded ? EXPANDED_HEIGHT : COLLAPSED_HEIGHT;
-  const newWidth = isExpanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH;
+  const baseWidth = isExpanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH;
+  const newWidth = isBarExpanded ? baseWidth + BAR_EXPANDED_EXTRA_WIDTH : baseWidth;
   
   // Get current position and maintain it, adjusting only height
   const currentBounds = mainWindow.getBounds();
@@ -266,8 +272,13 @@ ipcMain.handle('widget:toggle', () => {
     finalY = bounds.y + bounds.height - newHeight;
   }
   
+  let finalX = currentBounds.x;
+  if (finalX + newWidth > bounds.x + bounds.width) {
+    finalX = bounds.x + bounds.width - newWidth;
+  }
+  if (finalX < bounds.x) finalX = bounds.x;
   mainWindow.setBounds({
-    x: currentBounds.x,
+    x: finalX,
     y: finalY,
     width: newWidth,
     height: newHeight
@@ -287,6 +298,28 @@ ipcMain.handle('widget:toggle', () => {
 
 ipcMain.handle('widget:getState', () => {
   return isExpanded;
+});
+
+ipcMain.handle('widget:toggleBarExpand', () => {
+  if (!mainWindow) return isBarExpanded;
+  isBarExpanded = !isBarExpanded;
+  const currentBounds = mainWindow.getBounds();
+  const display = screen.getDisplayNearestPoint({ x: currentBounds.x, y: currentBounds.y });
+  const bounds = display.bounds;
+  const baseWidth = isExpanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH;
+  const newWidth = isBarExpanded ? baseWidth + BAR_EXPANDED_EXTRA_WIDTH : baseWidth;
+  let finalX = currentBounds.x;
+  if (finalX + newWidth > bounds.x + bounds.width) {
+    finalX = bounds.x + bounds.width - newWidth;
+  }
+  if (finalX < bounds.x) finalX = bounds.x;
+  mainWindow.setBounds({
+    x: finalX,
+    y: currentBounds.y,
+    width: newWidth,
+    height: currentBounds.height
+  });
+  return isBarExpanded;
 });
 
 ipcMain.handle('widget:toggleSettings', () => {
@@ -397,6 +430,16 @@ ipcMain.handle('app:quit', () => {
 ipcMain.handle('outlook:openCalendar', () => {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   outlookWindowService.openOutlookCalendarWindow(mainWindow.getBounds());
+});
+
+ipcMain.handle('timeweb:open', () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  timeWindowService.openTimeWebWindow(mainWindow.getBounds());
+});
+
+ipcMain.handle('jira:openClockwork', () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  jiraWindowService.openJiraClockworkWindow(mainWindow.getBounds());
 });
 
 // Calendar IPC handlers
