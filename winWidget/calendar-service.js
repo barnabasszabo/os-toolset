@@ -116,13 +116,14 @@ class CalendarService {
 
   getNextEvent() {
     const now = DateUtils.now();
-    // -3 percben lévő meetingeket is megjelenítjük (mert lehet késve megy be)
-    const threeMinsAgo = DateUtils.subtractMinutes(now, 3);
+    // -5 percben lévő meetingeket is megjelenítjük (mert lehet késve megy be)
+    const fiveMinsAgo = DateUtils.subtractMinutes(now, 5);
     const nowDate = DateUtils.toDate(now);
-    const threeMinsAgoDate = DateUtils.toDate(threeMinsAgo);
+    const fiveMinsAgoDate = DateUtils.toDate(fiveMinsAgo);
     // Az események már a beállított timezone-ban vannak tárolva
     const upcoming = this.events.filter(e => {
-      return e.start > threeMinsAgoDate && e.end > nowDate;
+      const isOngoing = DateUtils.isOngoing(e.start, e.end, now);
+      return (e.start > fiveMinsAgoDate || isOngoing) && e.end > nowDate;
     });
     if (upcoming.length === 0) return null;
     // Rendezzük kezdési idő szerint és adjuk vissza a legkorábbit
@@ -141,8 +142,8 @@ class CalendarService {
     const endDate = DateUtils.toDate(endMoment);
     const todayStartDate = DateUtils.toDate(todayStart);
     
-    // -3 percben lévő meetingeket is megjelenítjük (mert lehet késve megy be)
-    const threeMinsAgo = DateUtils.subtractMinutes(now, 3);
+    // -5 percben lévő meetingeket is megjelenítjük (mert lehet késve megy be)
+    const fiveMinsAgo = DateUtils.subtractMinutes(now, 5);
     const nowDate = DateUtils.toDate(now);
     
     this.events.forEach(event => {

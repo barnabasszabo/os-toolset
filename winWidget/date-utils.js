@@ -185,11 +185,11 @@ class DateUtils {
    * @param {Date|moment.Moment} startDate - Kezdési dátum
    * @returns {string|null} Formázott idő vagy null, ha már túl régen volt
    */
-  static formatTimeUntil(startDate) {
+  static formatTimeUntil(startDate, graceMinutes = 5) {
     const diffMins = this.diffMinutes(startDate);
     
-    // -3 percig mutatjuk (mert lehet késve megy be)
-    if (diffMins < -3) {
+    // -graceMinutes percig mutatjuk (mert lehet késve megy be)
+    if (diffMins < -graceMinutes) {
       return null;
     }
     
@@ -199,6 +199,24 @@ class DateUtils {
     
     const hours = Math.floor(diffMins / 60);
     return `${hours}ó`;
+  }
+
+  /**
+   * Formázza, mennyi ideje fut a meeting
+   * @param {Date|moment.Moment} startDate - Kezdési dátum
+   * @param {Date|moment.Moment|null} now - Aktuális idő (opcionális)
+   * @returns {string|null}
+   */
+  static formatElapsedSince(startDate, now = null) {
+    if (!startDate) return null;
+    const nowMoment = now ? this.toTimezone(now) : this.now();
+    const diffMins = Math.max(0, this.diffMinutes(nowMoment, startDate));
+    if (diffMins < 60) {
+      return `${diffMins}p`;
+    }
+    const hours = Math.floor(diffMins / 60);
+    const mins = diffMins % 60;
+    return mins > 0 ? `${hours}ó ${mins}p` : `${hours}ó`;
   }
 
   /**
@@ -253,12 +271,41 @@ class DateUtils {
   /**
    * Ellenőrzi, hogy egy dátum a múltban van-e
    * @param {Date|moment.Moment} date - Az ellenőrizendő dátum
-   * @param {number} thresholdMinutes - Küszöb percekben (alapértelmezetten -3)
+   * @param {number} thresholdMinutes - Küszöb percekben (alapértelmezetten -5)
    * @returns {boolean}
    */
-  static isPast(date, thresholdMinutes = -3) {
+  static isPast(date, thresholdMinutes = -5) {
     const diffMins = this.diffMinutes(date);
     return diffMins < thresholdMinutes;
+  }
+
+  /**
+   * Ellenőrzi, hogy egy meeting már véget ért-e
+   * @param {Date|moment.Moment} endDate - Meeting vége
+   * @param {Date|moment.Moment|null} now - Aktuális idő (opcionális)
+   * @returns {boolean}
+   */
+  static isEnded(endDate, now = null) {
+    if (!endDate) return false;
+    const endMoment = this.toTimezone(endDate);
+    const nowMoment = now ? this.toTimezone(now) : this.now();
+    return endMoment.isBefore(nowMoment);
+  }
+
+  /**
+   * Ellenőrzi, hogy egy meeting épp tart-e
+   * @param {Date|moment.Moment} startDate - Meeting kezdete
+   * @param {Date|moment.Moment} endDate - Meeting vége
+   * @param {Date|moment.Moment|null} now - Aktuális idő (opcionális)
+   * @returns {boolean}
+   */
+  static isOngoing(startDate, endDate, now = null) {
+    if (!startDate || !endDate) return false;
+    const startMoment = this.toTimezone(startDate);
+    const endMoment = this.toTimezone(endDate);
+    const nowMoment = now ? this.toTimezone(now) : this.now();
+    const started = startMoment.isSame(nowMoment) || startMoment.isBefore(nowMoment);
+    return started && endMoment.isAfter(nowMoment);
   }
 
   /**

@@ -122,6 +122,17 @@ body {
     color: var(--text-secondary);
 }
 
+.theme-dark .contentView-settings .settings-user-email,
+.theme-dark .contentView-settings .settings-loading,
+.theme-dark .contentView-settings .settings-theme-options,
+.theme-dark .contentView-settings .theme-option,
+.theme-dark .contentView-settings .settings-color-label,
+.theme-dark .contentView-settings .color-input-group,
+.theme-dark .contentView-settings .settings-meeting-label,
+.theme-dark .contentView-settings .settings-meeting-input {
+    color: var(--text-primary);
+}
+
 .settings-user-avatar {
     background-color: var(--bg-avatar);
 }

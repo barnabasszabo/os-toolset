@@ -50,6 +50,7 @@ const settingsThemeWrap = document.getElementById('settingsThemeWrap');
 const themeDark = document.getElementById('themeDark');
 const themeLight = document.getElementById('themeLight');
 const settingsColorWrap = document.getElementById('settingsColorWrap');
+const settingsMeetingWrap = document.getElementById('settingsMeetingWrap');
 const settingsColorEnabled = document.getElementById('settingsColorEnabled');
 const colorGreenFrom = document.getElementById('colorGreenFrom');
 const colorGreenTo = document.getElementById('colorGreenTo');
@@ -57,6 +58,7 @@ const colorYellowFrom = document.getElementById('colorYellowFrom');
 const colorYellowTo = document.getElementById('colorYellowTo');
 const colorRedFrom = document.getElementById('colorRedFrom');
 const colorRedTo = document.getElementById('colorRedTo');
+const meetingGraceMinutesInput = document.getElementById('meetingGraceMinutes');
 
 // Calendar
 let calendarEvents = [];
@@ -68,6 +70,11 @@ let colorSettings = {
   green: { from: 30, to: 1440 }, // 30 perc - 24 óra
   yellow: { from: 10, to: 30 },  // 10 perc - 30 perc
   red: { from: -5, to: 10 }       // -5 perc - 10 perc
+};
+
+// Meeting megjelenítési beállítások
+let meetingDisplaySettings = {
+  graceMinutes: 5
 };
 
 // Téma beállítások
@@ -148,6 +155,31 @@ function loadColorSettings() {
   }
 }
 
+// Betöltjük a localStorage-ból a meeting beállításokat
+function loadMeetingDisplaySettings() {
+  try {
+    const saved = localStorage.getItem('meetingDisplaySettings');
+    if (saved) {
+      const loaded = JSON.parse(saved);
+      const minutes = Number.isFinite(loaded.graceMinutes) ? Math.max(0, loaded.graceMinutes) : 5;
+      meetingDisplaySettings = {
+        graceMinutes: minutes
+      };
+    }
+  } catch (e) {
+    console.error('Error loading meeting display settings:', e);
+  }
+}
+
+// Elmentjük a localStorage-ba a meeting beállításokat
+function saveMeetingDisplaySettings() {
+  try {
+    localStorage.setItem('meetingDisplaySettings', JSON.stringify(meetingDisplaySettings));
+  } catch (e) {
+    console.error('Error saving meeting display settings:', e);
+  }
+}
+
 // Elmentjük a localStorage-ba a színezési beállításokat
 function saveColorSettings() {
   try {
@@ -159,6 +191,7 @@ function saveColorSettings() {
 
 // Betöltjük az indításkor
 loadColorSettings();
+loadMeetingDisplaySettings();
 
 // Dátum kezelés központi modul használata (DateUtils betöltve a HTML-ből)
 
@@ -188,7 +221,7 @@ function getTimeUntilColor(diffMins) {
 // Közös függvény a hátralévő idő elem létrehozásához
 function createTimeUntilElement(startDate, className = 'meeting-time-until') {
   const diffMins = DateUtils.diffMinutes(startDate);
-  const timeUntil = DateUtils.formatTimeUntil(startDate);
+  const timeUntil = DateUtils.formatTimeUntil(startDate, meetingDisplaySettings.graceMinutes);
   
   if (timeUntil === null) {
     return null;
@@ -205,6 +238,24 @@ function createTimeUntilElement(startDate, className = 'meeting-time-until') {
   }
   
   return timeUntilEl;
+}
+
+function createOngoingBadge(startDate) {
+  const badge = document.createElement('span');
+  badge.className = 'meeting-status meeting-status-ongoing';
+  const elapsed = DateUtils.formatElapsedSince(startDate);
+  if (!elapsed) {
+    badge.textContent = 'Folyamatban';
+    return badge;
+  }
+
+  const label = document.createElement('span');
+  label.textContent = 'Folyamatban ';
+  const value = document.createElement('strong');
+  value.textContent = elapsed;
+  badge.appendChild(label);
+  badge.appendChild(value);
+  return badge;
 }
 
 function updateBarViewAlertState(timeUntilEl) {
@@ -276,14 +327,18 @@ function renderUserAvatar(user, photo, className = 'meeting-user-avatar') {
   return avatar;
 }
 
-async function renderMeetingItem(event, organizerPhoto, attendeePhotos, isToday = false, isPast = false) {
+async function renderMeetingItem(event, organizerPhoto, attendeePhotos, isToday = false, isPast = false, isOngoing = false) {
   const li = document.createElement('li');
   li.className = 'list-group-item';
   
-  // Ha elmúlt meeting (-3 percnél régebbi), rejtsük el alapból
+  // Ha elmúlt meeting (véget ért), rejtsük el alapból
   if (isPast) {
     li.classList.add('meeting-past');
     li.style.display = 'none'; // Alapból rejtve
+  }
+
+  if (isOngoing) {
+    li.classList.add('meeting-ongoing');
   }
   
   // Meeting címe
@@ -298,10 +353,17 @@ async function renderMeetingItem(event, organizerPhoto, attendeePhotos, isToday 
   // Meeting részletek - egy sorban: hátralévő percek | meeting info | teams gomb
   const details = document.createElement('div');
   details.className = 'meeting-details';
+
+  if (isOngoing) {
+    const ongoingBadge = createOngoingBadge(event.start);
+    details.appendChild(ongoingBadge);
+    const sepOngoing = document.createTextNode(' | ');
+    details.appendChild(sepOngoing);
+  }
   
   // Hány perc múlva kezdődik - ha kevesebb mint 12 óra van hátra, mutassuk meg
   const diffMins = DateUtils.diffMinutes(event.start);
-  if (diffMins >= -3 && diffMins < 720) { // -3 perc és 12 óra (720 perc) között
+  if (diffMins >= -meetingDisplaySettings.graceMinutes && diffMins < 720) { // -graceMinutes perc és 12 óra (720 perc) között
     const timeUntilEl = createTimeUntilElement(event.start, 'meeting-time-until');
     if (timeUntilEl) {
       details.appendChild(timeUntilEl);
@@ -440,7 +502,7 @@ async function renderCalendarList() {
       const dayList = document.createElement('ul');
       dayList.className = 'list-group';
       
-      // Rendezzük a nap eseményeit hátralévő idő szerint (növekvő sorrendben: -3 perc, majd növekvő)
+      // Rendezzük a nap eseményeit hátralévő idő szerint (növekvő sorrendben)
       // Az események már a beállított timezone-ban vannak tárolva
       const sortedEvents = [...dayData.events].sort((a, b) => {
         // Elsődleges: hátralévő percek szerint növekvő sorrendben
@@ -456,7 +518,14 @@ async function renderCalendarList() {
         if (aIsOrganizer && !bIsOrganizer) return -1;
         if (!aIsOrganizer && bIsOrganizer) return 1;
         
-        // Harmadlagos: kezdési idő szerint (stabil rendezés)
+        // Harmadlagos: résztvevők száma szerint (több résztvevő előre)
+        const aAttendeeCount = a.attendees ? a.attendees.length : 0;
+        const bAttendeeCount = b.attendees ? b.attendees.length : 0;
+        if (aAttendeeCount !== bAttendeeCount) {
+          return bAttendeeCount - aAttendeeCount;
+        }
+        
+        // Negyedleges: kezdési idő szerint (stabil rendezés)
         return a.start - b.start;
       });
       
@@ -467,9 +536,9 @@ async function renderCalendarList() {
       let renderedCount = 0;
       for (const event of sortedEvents) {
         // Az események már a beállított timezone-ban vannak tárolva
-        // Ellenőrizzük, hogy elmúlt-e a meeting (-3 percnél régebbi)
-        const diffMins = DateUtils.diffMinutes(event.start);
-        const isPast = DateUtils.isPast(event.start);
+        // Ellenőrizzük, hogy elmúlt-e a meeting (véget ért-e)
+        const isOngoing = DateUtils.isOngoing(event.start, event.end);
+        const isPast = DateUtils.isEnded(event.end);
         
         // Szervező kép
         const organizerEmail = event.organizer?.email;
@@ -489,7 +558,7 @@ async function renderCalendarList() {
           }
         }
         
-        const meetingItem = await renderMeetingItem(event, organizerPhoto, attendeePhotos, isToday, isPast);
+        const meetingItem = await renderMeetingItem(event, organizerPhoto, attendeePhotos, isToday, isPast, isOngoing);
         if (meetingItem) {
           dayList.appendChild(meetingItem);
           renderedCount++;
@@ -530,13 +599,12 @@ async function updateBarViewWithNextMeeting() {
   }
   
   const now = DateUtils.now();
-  // -3 percben lévő meetingeket is megjelenítjük (mert lehet késve megy be)
-  const threeMinsAgo = DateUtils.subtractMinutes(now, 3);
+  // -graceMinutes percben lévő meetingeket is megjelenítjük (mert lehet késve megy be)
   const nowDate = DateUtils.toDate(now);
-  const threeMinsAgoDate = DateUtils.toDate(threeMinsAgo);
   // Az események már a beállított timezone-ban vannak tárolva
   const upcoming = calendarEvents.filter(e => {
-    return e.start > threeMinsAgoDate && e.end > nowDate;
+    const diffMins = DateUtils.diffMinutes(e.start, now);
+    return diffMins >= -meetingDisplaySettings.graceMinutes && e.end > nowDate;
   });
   if (upcoming.length === 0) {
     barViewTitle.textContent = 'Következő';
@@ -544,7 +612,7 @@ async function updateBarViewWithNextMeeting() {
     return;
   }
   
-  // Rendezzük hátralévő idő szerint (növekvő sorrendben: -3 perc, majd növekvő)
+  // Rendezzük hátralévő idő szerint (növekvő sorrendben)
   const userEmail = authState.userInfo?.userPrincipalName || authState.account?.username || '';
   
   upcoming.sort((a, b) => {
@@ -560,12 +628,19 @@ async function updateBarViewWithNextMeeting() {
     const bIsOrganizer = b.organizer?.email?.toLowerCase() === userEmail.toLowerCase();
     if (aIsOrganizer && !bIsOrganizer) return -1;
     if (!aIsOrganizer && bIsOrganizer) return 1;
+
+    // Harmadlagos: résztvevők száma szerint (több résztvevő előre)
+    const aAttendeeCount = a.attendees ? a.attendees.length : 0;
+    const bAttendeeCount = b.attendees ? b.attendees.length : 0;
+    if (aAttendeeCount !== bAttendeeCount) {
+      return bAttendeeCount - aAttendeeCount;
+    }
     
-    // Harmadlagos: kezdési idő szerint (stabil rendezés)
+    // Negyedleges: kezdési idő szerint (stabil rendezés)
     return a.start - b.start;
   });
   
-  // A legelső meeting (legkorábbi, -3 perctől indulva)
+  // A legelső meeting (legkorábbi, -graceMinutes-től indulva)
   const nextEvent = upcoming[0];
   
   // Keresünk azonos időpontú meetingeket
@@ -764,12 +839,14 @@ function updateSettingsAuthUI() {
   settingsUserWrap.style.display = 'none';
   settingsThemeWrap.style.display = 'none';
   settingsColorWrap.style.display = 'none';
+  settingsMeetingWrap.style.display = 'none';
   settingsAuthLoading.style.display = 'none';
   
   if (authState.isAuthenticated) {
     settingsUserWrap.style.display = 'flex';
     settingsThemeWrap.style.display = 'block';
     settingsColorWrap.style.display = 'block';
+    settingsMeetingWrap.style.display = 'block';
     
     // Téma beállítás betöltése
     if (themeSettings.theme === 'light') {
@@ -786,6 +863,7 @@ function updateSettingsAuthUI() {
     colorYellowTo.value = colorSettings.yellow.to;
     colorRedFrom.value = colorSettings.red.from;
     colorRedTo.value = colorSettings.red.to;
+    meetingGraceMinutesInput.value = meetingDisplaySettings.graceMinutes;
     
     settingsUserName.textContent = authState.userInfo?.displayName || authState.userInfo?.userPrincipalName || '–';
     settingsUserEmail.textContent = authState.userInfo?.userPrincipalName || authState.account?.username || '–';
@@ -997,8 +1075,23 @@ function updateColorSettings() {
   saveColorSettings();
 }
 
+function updateMeetingDisplaySettings() {
+  const parsed = parseInt(meetingGraceMinutesInput.value, 10);
+  const minutes = Number.isFinite(parsed) ? Math.max(0, parsed) : 5;
+  meetingDisplaySettings.graceMinutes = minutes;
+  meetingGraceMinutesInput.value = minutes;
+  saveMeetingDisplaySettings();
+}
+
 async function refreshUIWithColorSettings() {
   // Frissítjük a UI-t
+  await updateBarViewWithNextMeeting();
+  if (isExpanded && !isSettingsOpen) {
+    await renderCalendarList();
+  }
+}
+
+async function refreshUIWithMeetingSettings() {
   await updateBarViewWithNextMeeting();
   if (isExpanded && !isSettingsOpen) {
     await renderCalendarList();
@@ -1021,6 +1114,16 @@ settingsColorEnabled.addEventListener('change', async () => {
     updateColorSettings();
     await refreshUIWithColorSettings();
   });
+});
+
+meetingGraceMinutesInput.addEventListener('change', async () => {
+  updateMeetingDisplaySettings();
+  await refreshUIWithMeetingSettings();
+});
+
+meetingGraceMinutesInput.addEventListener('blur', async () => {
+  updateMeetingDisplaySettings();
+  await refreshUIWithMeetingSettings();
 });
 
 // Main process állapot

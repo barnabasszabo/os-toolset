@@ -106,6 +106,24 @@
         .meeting-past {
             opacity: 0.6;
         }
+
+        .meeting-ongoing {
+            border-color: #198754;
+        }
+
+        .meeting-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background-color: rgba(25, 135, 84, 0.15);
+            color: #198754;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
         
         .btn-quit-header {
             padding: 6px 10px;
@@ -589,6 +607,49 @@
             margin-left: 24px;
             margin-top: 8px;
         }
+
+        .settings-meeting-wrap {
+            margin-top: 16px;
+            padding-top: 16px;
+        }
+
+        .settings-meeting-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .settings-meeting-label {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .settings-meeting-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .settings-meeting-number {
+            width: 60px;
+            padding: 4px 6px;
+            font-size: 12px;
+            border: 1px solid var(--border-secondary);
+            border-radius: 4px;
+            -webkit-app-region: no-drag;
+        }
+
+        .settings-meeting-number:focus {
+            outline: none;
+            border-color: #6264a7;
+        }
+
+        .settings-meeting-number::-webkit-inner-spin-button,
+        .settings-meeting-number::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
         
         .color-input-group {
             display: flex;
@@ -1022,6 +1083,15 @@
                                             <span>perc</span>
                                         </label>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-meeting-wrap" id="settingsMeetingWrap" style="display: none;">
+                            <div class="settings-meeting-row">
+                                <label class="settings-meeting-label">Megjelenítés kezdés után:</label>
+                                <div class="settings-meeting-input">
+                                    <input type="number" id="meetingGraceMinutes" class="settings-meeting-number" min="0" step="1">
+                                    <span>perc</span>
                                 </div>
                             </div>
                         </div>
