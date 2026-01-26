@@ -17,6 +17,7 @@
   "build": {
     "appId": "hu.barnabas.taskbarcalendar",
     "productName": "taskbarCalendar",
+    "artifactName": "taskbarCalendar.${ext}",
     "files": [
       "**/*"
     ],
