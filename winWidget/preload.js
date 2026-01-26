@@ -42,6 +42,7 @@ contextBridge.exposeInMainWorld('calendar', {
   getNextEvent: () => ipcRenderer.invoke('calendar:getNextEvent'),
   getEventsByDay: () => ipcRenderer.invoke('calendar:getEventsByDay'),
   getUserPhoto: (email) => ipcRenderer.invoke('calendar:getUserPhoto', email),
+  setRefreshInterval: (intervalMinutes) => ipcRenderer.invoke('calendar:setRefreshInterval', intervalMinutes),
   onEventsUpdated: (callback) => {
     ipcRenderer.on('calendar:events-updated', (event, events) => {
       callback(events);

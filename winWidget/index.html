@@ -411,7 +411,8 @@
             flex: 1;
             display: none;
             flex-direction: column;
-            padding: 12px;
+            padding: 0;
+            height: 100%;
             min-height: 0;
         }
         
@@ -422,7 +423,10 @@
         .contentView-settings .card {
             border: 1px solid var(--border-secondary);
             border-radius: 8px;
-            flex-shrink: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
         }
         
         .contentView-settings .card-header {
@@ -434,6 +438,8 @@
         
         .contentView-settings .card-body {
             padding: 14px;
+            overflow-y: auto;
+            min-height: 0;
         }
         
         /* Bejelentkezés: nincs user */
@@ -650,6 +656,54 @@
             -webkit-appearance: none;
             margin: 0;
         }
+
+        .settings-refresh-wrap {
+            margin-top: 16px;
+            padding-top: 16px;
+        }
+
+        .settings-refresh-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .settings-refresh-label {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .settings-refresh-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .settings-refresh-number {
+            width: 60px;
+            padding: 4px 6px;
+            font-size: 12px;
+            border: 1px solid var(--border-secondary);
+            border-radius: 4px;
+            -webkit-app-region: no-drag;
+        }
+
+        .settings-refresh-number:focus {
+            outline: none;
+            border-color: #6264a7;
+        }
+
+        .settings-refresh-number::-webkit-inner-spin-button,
+        .settings-refresh-number::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .settings-refresh-last {
+            font-size: 11px;
+            margin-top: 6px;
+        }
         
         .color-input-group {
             display: flex;
@@ -711,7 +765,6 @@
         
         /* Program bezárása gomb - bal alsó, piros outline stílus */
         .settings-quit-wrap {
-            flex: 1;
             display: flex;
             align-items: flex-end;
             justify-content: space-between;
@@ -1004,9 +1057,6 @@
                 <div class="list-wrap">
                     <ul class="list-group" id="itemList"></ul>
                 </div>
-                <div class="btn-close-wrap">
-                    <button class="btn-close" id="btnCollapse">Összecsuk</button>
-                </div>
             </div>
             
             <!-- Settings: belépés card + program bezárása -->
@@ -1093,6 +1143,16 @@
                                     <input type="number" id="meetingGraceMinutes" class="settings-meeting-number" min="0" step="1">
                                     <span>perc</span>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="settings-refresh-wrap" id="settingsRefreshWrap" style="display: none;">
+                            <div class="settings-refresh-row">
+                                <label class="settings-refresh-label">Naptár frissítés:</label>
+                                <div class="settings-refresh-input">
+                                    <input type="number" id="calendarRefreshMinutes" class="settings-refresh-number" min="1" step="1">
+                                    <span>perc</span>
+                                </div>
+                                <div class="settings-refresh-last" id="calendarRefreshLast">Utolsó frissítés: –</div>
                             </div>
                         </div>
                         <div class="settings-loading" id="settingsAuthLoading" style="display: none;">Betöltés…</div>

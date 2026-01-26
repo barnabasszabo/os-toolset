@@ -442,6 +442,20 @@ ipcMain.handle('jira:openClockwork', () => {
   jiraWindowService.openJiraClockworkWindow(mainWindow.getBounds());
 });
 
+function parseIntervalMinutes(value) {
+  const minutes = parseInt(value, 10);
+  if (!Number.isFinite(minutes) || minutes < 1) {
+    return 1;
+  }
+  return minutes;
+}
+
+function sendCalendarEvents(events) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('calendar:events-updated', events);
+  }
+}
+
 // Calendar IPC handlers
 ipcMain.handle('calendar:getEvents', async () => {
   try {
@@ -506,6 +520,12 @@ ipcMain.handle('calendar:getUserPhoto', async (event, email) => {
   }
 });
 
+ipcMain.handle('calendar:setRefreshInterval', async (event, intervalMinutes) => {
+  const minutes = parseIntervalMinutes(intervalMinutes);
+  calendarService.startAutoRefresh(sendCalendarEvents, minutes);
+  return { success: true, intervalMinutes: minutes };
+});
+
 app.whenReady().then(async () => {
   // Set up callback for auth state restoration
   authService.setStateRestoredCallback((state) => {
@@ -520,11 +540,7 @@ app.whenReady().then(async () => {
   createWindow();
   
   // Start calendar auto-refresh
-  calendarService.startAutoRefresh((events) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('calendar:events-updated', events);
-    }
-  }, 1); // 1 perc
+  calendarService.startAutoRefresh(sendCalendarEvents, 1); // 1 perc
   
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

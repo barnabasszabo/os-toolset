@@ -129,7 +129,10 @@ body {
 .theme-dark .contentView-settings .settings-color-label,
 .theme-dark .contentView-settings .color-input-group,
 .theme-dark .contentView-settings .settings-meeting-label,
-.theme-dark .contentView-settings .settings-meeting-input {
+.theme-dark .contentView-settings .settings-meeting-input,
+.theme-dark .contentView-settings .settings-refresh-label,
+.theme-dark .contentView-settings .settings-refresh-input,
+.theme-dark .contentView-settings .settings-refresh-last {
     color: var(--text-primary);
 }
 

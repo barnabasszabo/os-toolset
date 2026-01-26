@@ -31,10 +31,10 @@ const btnTimeWeb = document.getElementById('btnTimeWeb');
 const btnJiraClockwork = document.getElementById('btnJiraClockwork');
 const btnBarExpand = document.getElementById('btnBarExpand');
 const itemList = document.getElementById('itemList');
-const btnCollapse = document.getElementById('btnCollapse');
 const btnRefresh = document.getElementById('btnRefresh');
 const btnTogglePast = document.getElementById('btnTogglePast');
 const btnLoginMicrosoft = document.getElementById('btnLoginMicrosoft');
+const btnQuitHeader = document.getElementById('btnQuitHeader');
 const settingsUserWrap = document.getElementById('settingsUserWrap');
 const settingsLoginWrap = document.getElementById('settingsLoginWrap');
 const settingsAuthLoading = document.getElementById('settingsAuthLoading');
@@ -45,12 +45,12 @@ const settingsUserEmail = document.getElementById('settingsUserEmail');
 const btnLogout = document.getElementById('btnLogout');
 const btnCloseSettings = document.getElementById('btnCloseSettings');
 const btnQuitApp = document.getElementById('btnQuitApp');
-const btnQuitHeader = document.getElementById('btnQuitHeader');
 const settingsThemeWrap = document.getElementById('settingsThemeWrap');
 const themeDark = document.getElementById('themeDark');
 const themeLight = document.getElementById('themeLight');
 const settingsColorWrap = document.getElementById('settingsColorWrap');
 const settingsMeetingWrap = document.getElementById('settingsMeetingWrap');
+const settingsRefreshWrap = document.getElementById('settingsRefreshWrap');
 const settingsColorEnabled = document.getElementById('settingsColorEnabled');
 const colorGreenFrom = document.getElementById('colorGreenFrom');
 const colorGreenTo = document.getElementById('colorGreenTo');
@@ -59,6 +59,8 @@ const colorYellowTo = document.getElementById('colorYellowTo');
 const colorRedFrom = document.getElementById('colorRedFrom');
 const colorRedTo = document.getElementById('colorRedTo');
 const meetingGraceMinutesInput = document.getElementById('meetingGraceMinutes');
+const calendarRefreshMinutesInput = document.getElementById('calendarRefreshMinutes');
+const calendarRefreshLast = document.getElementById('calendarRefreshLast');
 
 // Calendar
 let calendarEvents = [];
@@ -76,6 +78,12 @@ let colorSettings = {
 let meetingDisplaySettings = {
   graceMinutes: 5
 };
+
+let calendarRefreshSettings = {
+  intervalMinutes: 1
+};
+
+let lastCalendarRefreshAt = null;
 
 // Téma beállítások
 let themeSettings = {
@@ -171,12 +179,33 @@ function loadMeetingDisplaySettings() {
   }
 }
 
+function loadCalendarRefreshSettings() {
+  try {
+    const saved = localStorage.getItem('calendarRefreshSettings');
+    if (saved) {
+      const loaded = JSON.parse(saved);
+      const minutes = Number.isFinite(loaded.intervalMinutes) ? Math.max(1, loaded.intervalMinutes) : 1;
+      calendarRefreshSettings = { intervalMinutes: minutes };
+    }
+  } catch (e) {
+    console.error('Error loading calendar refresh settings:', e);
+  }
+}
+
 // Elmentjük a localStorage-ba a meeting beállításokat
 function saveMeetingDisplaySettings() {
   try {
     localStorage.setItem('meetingDisplaySettings', JSON.stringify(meetingDisplaySettings));
   } catch (e) {
     console.error('Error saving meeting display settings:', e);
+  }
+}
+
+function saveCalendarRefreshSettings() {
+  try {
+    localStorage.setItem('calendarRefreshSettings', JSON.stringify(calendarRefreshSettings));
+  } catch (e) {
+    console.error('Error saving calendar refresh settings:', e);
   }
 }
 
@@ -192,6 +221,25 @@ function saveColorSettings() {
 // Betöltjük az indításkor
 loadColorSettings();
 loadMeetingDisplaySettings();
+loadCalendarRefreshSettings();
+
+function applyCalendarRefreshInterval() {
+  if (window.calendar && window.calendar.setRefreshInterval) {
+    window.calendar.setRefreshInterval(calendarRefreshSettings.intervalMinutes);
+  }
+}
+
+applyCalendarRefreshInterval();
+
+function updateCalendarRefreshLastDisplay() {
+  if (!calendarRefreshLast) return;
+  if (!lastCalendarRefreshAt) {
+    calendarRefreshLast.textContent = 'Utolsó frissítés: –';
+    return;
+  }
+  const timeText = DateUtils.formatTime(lastCalendarRefreshAt);
+  calendarRefreshLast.textContent = `Utolsó frissítés: ${timeText}`;
+}
 
 // Dátum kezelés központi modul használata (DateUtils betöltve a HTML-ből)
 
@@ -756,6 +804,8 @@ async function refreshCalendar(showLoading = false) {
     if (isExpanded && !isSettingsOpen) {
       await renderCalendarList();
     }
+    lastCalendarRefreshAt = null;
+    updateCalendarRefreshLastDisplay();
     if (showLoading && btnRefresh) {
       btnRefresh.classList.remove('refreshing');
       btnRefresh.disabled = false;
@@ -767,6 +817,8 @@ async function refreshCalendar(showLoading = false) {
     // Frissítjük a naptár adatokat az API-ból (mindig friss adatokat kérünk)
     // A getEvents() mindig meghívja a getCalendarEvents()-et, ami új API hívást indít
     calendarEvents = await window.calendar.getEvents();
+    lastCalendarRefreshAt = DateUtils.now();
+    updateCalendarRefreshLastDisplay();
     // Újraszámoljuk a hátralévő időket és újrarendezzük mindkét view-ban
     await updateBarViewWithNextMeeting();
     if (isExpanded && !isSettingsOpen) {
@@ -840,6 +892,7 @@ function updateSettingsAuthUI() {
   settingsThemeWrap.style.display = 'none';
   settingsColorWrap.style.display = 'none';
   settingsMeetingWrap.style.display = 'none';
+  settingsRefreshWrap.style.display = 'none';
   settingsAuthLoading.style.display = 'none';
   
   if (authState.isAuthenticated) {
@@ -847,6 +900,7 @@ function updateSettingsAuthUI() {
     settingsThemeWrap.style.display = 'block';
     settingsColorWrap.style.display = 'block';
     settingsMeetingWrap.style.display = 'block';
+    settingsRefreshWrap.style.display = 'block';
     
     // Téma beállítás betöltése
     if (themeSettings.theme === 'light') {
@@ -864,6 +918,8 @@ function updateSettingsAuthUI() {
     colorRedFrom.value = colorSettings.red.from;
     colorRedTo.value = colorSettings.red.to;
     meetingGraceMinutesInput.value = meetingDisplaySettings.graceMinutes;
+    calendarRefreshMinutesInput.value = calendarRefreshSettings.intervalMinutes;
+    updateCalendarRefreshLastDisplay();
     
     settingsUserName.textContent = authState.userInfo?.displayName || authState.userInfo?.userPrincipalName || '–';
     settingsUserEmail.textContent = authState.userInfo?.userPrincipalName || authState.account?.username || '–';
@@ -964,10 +1020,6 @@ barViewData.addEventListener('click', (e) => {
   }
 });
 
-btnCollapse.addEventListener('click', (e) => {
-  e.stopPropagation();
-  toggleWidget();
-});
 
 btnSettingsHeader.addEventListener('click', (e) => {
   e.stopPropagation();
@@ -1035,15 +1087,16 @@ function handleQuit() {
   window.app.quit();
 }
 
-if (btnQuitHeader) {
-  btnQuitHeader.addEventListener('click', (e) => {
+
+if (btnQuitApp) {
+  btnQuitApp.addEventListener('click', (e) => {
     e.stopPropagation();
     handleQuit();
   });
 }
 
-if (btnQuitApp) {
-  btnQuitApp.addEventListener('click', (e) => {
+if (btnQuitHeader) {
+  btnQuitHeader.addEventListener('click', (e) => {
     e.stopPropagation();
     handleQuit();
   });
@@ -1081,6 +1134,16 @@ function updateMeetingDisplaySettings() {
   meetingDisplaySettings.graceMinutes = minutes;
   meetingGraceMinutesInput.value = minutes;
   saveMeetingDisplaySettings();
+}
+
+function updateCalendarRefreshSettings() {
+  const parsed = parseInt(calendarRefreshMinutesInput.value, 10);
+  const minutes = Number.isFinite(parsed) ? Math.max(1, parsed) : 1;
+  calendarRefreshSettings.intervalMinutes = minutes;
+  calendarRefreshMinutesInput.value = minutes;
+  saveCalendarRefreshSettings();
+  applyCalendarRefreshInterval();
+  refreshCalendar();
 }
 
 async function refreshUIWithColorSettings() {
@@ -1126,6 +1189,14 @@ meetingGraceMinutesInput.addEventListener('blur', async () => {
   await refreshUIWithMeetingSettings();
 });
 
+calendarRefreshMinutesInput.addEventListener('change', () => {
+  updateCalendarRefreshSettings();
+});
+
+calendarRefreshMinutesInput.addEventListener('blur', () => {
+  updateCalendarRefreshSettings();
+});
+
 // Main process állapot
 window.widget.onState((expanded) => {
   isExpanded = expanded;
@@ -1166,7 +1237,9 @@ window.auth.onStateChanged(async (state) => {
 
 // Calendar events updated handler
 window.calendar.onEventsUpdated(async (events) => {
-  calendarEvents = events;
+  calendarEvents = Array.isArray(events) ? [...events] : [];
+  lastCalendarRefreshAt = DateUtils.now();
+  updateCalendarRefreshLastDisplay();
   await updateBarViewWithNextMeeting();
   if (isExpanded && !isSettingsOpen) {
     await renderCalendarList();
@@ -1186,9 +1259,4 @@ window.widget.getSettingsState().then((s) => {
 
 updateAuthState();
 
-// Periódikus frissítés (percenként)
-setInterval(() => {
-  if (authState.isAuthenticated) {
-    refreshCalendar();
-  }
-}, 60000); // 1 perc
+// Periódikus frissítés: main process küldi az events-updated-et percenként
