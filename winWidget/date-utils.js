@@ -198,7 +198,8 @@ class DateUtils {
     }
     
     const hours = Math.floor(diffMins / 60);
-    return `${hours}ó`;
+    const mins = diffMins % 60;
+    return mins > 0 ? `${hours}ó ${mins}p` : `${hours}ó`;
   }
 
   /**
