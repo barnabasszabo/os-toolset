@@ -1,5 +1,5 @@
 {
-  "name": "win-widget",
+  "name": "taskbar-calendar",
   "version": "1.0.0",
   "description": "Windows 11 always-on-top widget",
   "main": "main.js",
@@ -15,8 +15,8 @@
   "author": "",
   "license": "MIT",
   "build": {
-    "appId": "hu.barnabas.winwidget",
-    "productName": "WinWidget",
+    "appId": "hu.barnabas.taskbarcalendar",
+    "productName": "taskbarCalendar",
     "files": [
       "**/*"
     ],
