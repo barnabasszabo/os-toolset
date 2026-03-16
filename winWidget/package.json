@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "description": "Windows 11 always-on-top widget",
   "main": "main.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "overrides": {
+    "@electron/rebuild": "3.2.0",
+    "node-abi": "3.8.0"
+  },
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win"
