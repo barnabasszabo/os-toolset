@@ -61,6 +61,7 @@ const colorRedTo = document.getElementById('colorRedTo');
 const meetingGraceMinutesInput = document.getElementById('meetingGraceMinutes');
 const calendarRefreshMinutesInput = document.getElementById('calendarRefreshMinutes');
 const calendarRefreshLast = document.getElementById('calendarRefreshLast');
+const refreshLastMain = document.getElementById('refreshLastMain');
 
 // Calendar
 let calendarEvents = [];
@@ -232,13 +233,17 @@ function applyCalendarRefreshInterval() {
 applyCalendarRefreshInterval();
 
 function updateCalendarRefreshLastDisplay() {
-  if (!calendarRefreshLast) return;
+  const timeLabel = 'Utolsó sikeres frissítés: ';
+  const emptyText = timeLabel + '–';
   if (!lastCalendarRefreshAt) {
-    calendarRefreshLast.textContent = 'Utolsó frissítés: –';
+    if (calendarRefreshLast) calendarRefreshLast.textContent = emptyText;
+    if (refreshLastMain) refreshLastMain.textContent = emptyText;
     return;
   }
   const timeText = DateUtils.formatTime(lastCalendarRefreshAt);
-  calendarRefreshLast.textContent = `Utolsó frissítés: ${timeText}`;
+  const fullText = timeLabel + timeText;
+  if (calendarRefreshLast) calendarRefreshLast.textContent = fullText;
+  if (refreshLastMain) refreshLastMain.textContent = fullText;
 }
 
 // Dátum kezelés központi modul használata (DateUtils betöltve a HTML-ből)
@@ -797,7 +802,7 @@ async function refreshCalendar(showLoading = false) {
     btnRefresh.classList.add('refreshing');
     btnRefresh.disabled = true;
   }
-  
+
   if (!authState.isAuthenticated) {
     calendarEvents = [];
     await updateBarViewWithNextMeeting();
@@ -812,18 +817,18 @@ async function refreshCalendar(showLoading = false) {
     }
     return;
   }
-  
+
   try {
     // Frissítjük a naptár adatokat az API-ból (mindig friss adatokat kérünk)
-    // A getEvents() mindig meghívja a getCalendarEvents()-et, ami új API hívást indít
     calendarEvents = await window.calendar.getEvents();
-    lastCalendarRefreshAt = DateUtils.now();
-    updateCalendarRefreshLastDisplay();
-    // Újraszámoljuk a hátralévő időket és újrarendezzük mindkét view-ban
+    // Mind a lista, mind a kiemelt terület frissül minden frissítéskor
     await updateBarViewWithNextMeeting();
     if (isExpanded && !isSettingsOpen) {
       await renderCalendarList();
     }
+    // Csak sikeres teljes frissítés után írjuk ki az utolsó frissítés idejét
+    lastCalendarRefreshAt = DateUtils.now();
+    updateCalendarRefreshLastDisplay();
   } catch (e) {
     console.error('Error refreshing calendar:', e);
   } finally {
@@ -1235,15 +1240,15 @@ window.auth.onStateChanged(async (state) => {
   await updateUI();
 });
 
-// Calendar events updated handler
+// Calendar events updated handler – mind a lista, mind a kiemelt terület frissül
 window.calendar.onEventsUpdated(async (events) => {
   calendarEvents = Array.isArray(events) ? [...events] : [];
-  lastCalendarRefreshAt = DateUtils.now();
-  updateCalendarRefreshLastDisplay();
   await updateBarViewWithNextMeeting();
   if (isExpanded && !isSettingsOpen) {
     await renderCalendarList();
   }
+  lastCalendarRefreshAt = DateUtils.now();
+  updateCalendarRefreshLastDisplay();
 });
 
 // Init

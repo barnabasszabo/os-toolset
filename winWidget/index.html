@@ -72,8 +72,20 @@
         
         .refresh-header-right {
             display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+        
+        .refresh-header-buttons {
+            display: flex;
             align-items: center;
             gap: 8px;
+        }
+        
+        .refresh-last-main {
+            font-size: 11px;
+            color: var(--text-secondary);
         }
         
         .btn-toggle-past {
@@ -1041,17 +1053,20 @@
                         </button>
                     </div>
                     <div class="refresh-header-right">
-                        <button class="btn-toggle-past" id="btnTogglePast" title="Elmúlt meetingek megjelenítése/elrejtése">
-                            <span>Elmúltak</span>
-                        </button>
-                        <button class="btn-refresh" id="btnRefresh" title="Naptár frissítése">
-                            <svg class="btn-refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="23 4 23 10 17 10"></polyline>
-                                <polyline points="1 20 1 14 7 14"></polyline>
-                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                            </svg>
-                            <span>Frissítés</span>
-                        </button>
+                        <div class="refresh-header-buttons">
+                            <button class="btn-toggle-past" id="btnTogglePast" title="Elmúlt meetingek megjelenítése/elrejtése">
+                                <span>Elmúltak</span>
+                            </button>
+                            <button class="btn-refresh" id="btnRefresh" title="Naptár frissítése">
+                                <svg class="btn-refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <polyline points="1 20 1 14 7 14"></polyline>
+                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                </svg>
+                                <span>Frissítés</span>
+                            </button>
+                        </div>
+                        <div class="refresh-last-main" id="refreshLastMain">Utolsó sikeres frissítés: –</div>
                     </div>
                 </div>
                 <div class="list-wrap">
@@ -1152,7 +1167,7 @@
                                     <input type="number" id="calendarRefreshMinutes" class="settings-refresh-number" min="1" step="1">
                                     <span>perc</span>
                                 </div>
-                                <div class="settings-refresh-last" id="calendarRefreshLast">Utolsó frissítés: –</div>
+                                <div class="settings-refresh-last" id="calendarRefreshLast">Utolsó sikeres frissítés: –</div>
                             </div>
                         </div>
                         <div class="settings-loading" id="settingsAuthLoading" style="display: none;">Betöltés…</div>

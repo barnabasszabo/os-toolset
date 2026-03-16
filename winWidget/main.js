@@ -15,7 +15,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production' || !app.isPackaged;
 if (isDevelopment) {
   try {
     reloader = require('electron-reloader')(module, {
-      debug: true,
+      debug: false,
       watchRenderer: true,
       ignore: ['widget-position.json', 'auth-state.json', 'msal-cache.json']
     });
