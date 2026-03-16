@@ -81,7 +81,7 @@ let meetingDisplaySettings = {
 };
 
 let calendarRefreshSettings = {
-  intervalMinutes: 1
+  intervalMinutes: 5
 };
 
 let lastCalendarRefreshAt = null;
@@ -185,7 +185,7 @@ function loadCalendarRefreshSettings() {
     const saved = localStorage.getItem('calendarRefreshSettings');
     if (saved) {
       const loaded = JSON.parse(saved);
-      const minutes = Number.isFinite(loaded.intervalMinutes) ? Math.max(1, loaded.intervalMinutes) : 1;
+      const minutes = Number.isFinite(loaded.intervalMinutes) ? Math.max(1, loaded.intervalMinutes) : 5;
       calendarRefreshSettings = { intervalMinutes: minutes };
     }
   } catch (e) {

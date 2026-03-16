@@ -540,7 +540,7 @@ app.whenReady().then(async () => {
   createWindow();
   
   // Start calendar auto-refresh
-  calendarService.startAutoRefresh(sendCalendarEvents, 1); // 1 perc
+  calendarService.startAutoRefresh(sendCalendarEvents, 5); // 5 perc default
   
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

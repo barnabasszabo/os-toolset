@@ -191,7 +191,7 @@ class CalendarService {
     return result;
   }
 
-  startAutoRefresh(callback, intervalMinutes = 1) {
+  startAutoRefresh(callback, intervalMinutes = 5) {
     this.stopAutoRefresh();
     // Azonnal frissítés
     this.getCalendarEvents().then(() => {
