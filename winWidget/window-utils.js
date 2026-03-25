@@ -59,9 +59,28 @@ function showWindow(windowRef) {
   windowRef.focus();
 }
 
+function persistBounds(windowRef, saveSize) {
+  if (windowRef.isDestroyed()) return;
+  const b = windowRef.getBounds();
+  saveSize(b.width, b.height);
+}
+
+function attachWebviewSizePersistence(windowRef, saveSize, debounceMs = 400) {
+  let timer = null;
+  const schedule = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => persistBounds(windowRef, saveSize), debounceMs);
+  };
+  windowRef.on('resize', schedule);
+  windowRef.on('moved', schedule);
+  windowRef.on('blur', () => persistBounds(windowRef, saveSize));
+  windowRef.on('closed', () => clearTimeout(timer));
+}
+
 module.exports = {
   getAnchoredBounds,
   createFloatingWindow,
   attachAutoHideHandlers,
-  showWindow
+  showWindow,
+  attachWebviewSizePersistence
 };

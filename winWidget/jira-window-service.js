@@ -2,17 +2,19 @@ const {
   getAnchoredBounds,
   createFloatingWindow,
   attachAutoHideHandlers,
-  showWindow
+  showWindow,
+  attachWebviewSizePersistence
 } = require('./window-utils');
+const prefs = require('./webview-window-preferences');
 
-const JIRA_CLOCKWORK_URL = 'https://trendency.atlassian.net/plugins/servlet/ac/clockwork-cloud/clockwork-mywork';
-const WINDOW_SIZE = { width: 1500, height: 950 };
+const JIRA_CLOCKWORK_URL =
+  'https://trendency.atlassian.net/plugins/servlet/ac/clockwork-cloud/clockwork-mywork';
 const WINDOW_OFFSET = 12;
 
 let jiraClockworkWindow = null;
 
 function getJiraClockworkBounds(anchorBounds) {
-  return getAnchoredBounds(anchorBounds, WINDOW_SIZE, WINDOW_OFFSET);
+  return getAnchoredBounds(anchorBounds, prefs.loadSize(prefs.KEY_JIRA), WINDOW_OFFSET);
 }
 
 function buildJiraClockworkWindow(anchorBounds) {
@@ -22,6 +24,9 @@ function buildJiraClockworkWindow(anchorBounds) {
     nodeIntegration: false
   };
   jiraClockworkWindow = createFloatingWindow(bounds, webPreferences);
+  attachWebviewSizePersistence(jiraClockworkWindow, (w, h) => {
+    prefs.saveSize(prefs.KEY_JIRA, w, h);
+  });
   jiraClockworkWindow.loadURL(JIRA_CLOCKWORK_URL);
   attachAutoHideHandlers(jiraClockworkWindow, () => {
     jiraClockworkWindow = null;

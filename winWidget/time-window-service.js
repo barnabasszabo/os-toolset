@@ -2,17 +2,18 @@ const {
   getAnchoredBounds,
   createFloatingWindow,
   attachAutoHideHandlers,
-  showWindow
+  showWindow,
+  attachWebviewSizePersistence
 } = require('./window-utils');
+const prefs = require('./webview-window-preferences');
 
 const TIME_WEB_URL = 'http://localhost:8070/';
-const WINDOW_SIZE = { width: 1500, height: 950 };
 const WINDOW_OFFSET = 12;
 
 let timeWebWindow = null;
 
 function getTimeWebBounds(anchorBounds) {
-  return getAnchoredBounds(anchorBounds, WINDOW_SIZE, WINDOW_OFFSET);
+  return getAnchoredBounds(anchorBounds, prefs.loadSize(prefs.KEY_TIMEWEB), WINDOW_OFFSET);
 }
 
 function buildTimeWebWindow(anchorBounds) {
@@ -22,6 +23,9 @@ function buildTimeWebWindow(anchorBounds) {
     nodeIntegration: false
   };
   timeWebWindow = createFloatingWindow(bounds, webPreferences);
+  attachWebviewSizePersistence(timeWebWindow, (w, h) => {
+    prefs.saveSize(prefs.KEY_TIMEWEB, w, h);
+  });
   timeWebWindow.loadURL(TIME_WEB_URL);
   attachAutoHideHandlers(timeWebWindow, () => {
     timeWebWindow = null;
