@@ -1,0 +1,9 @@
+{
+  "uuid": "outlook-calendar@szabobarnabas.hu",
+  "name": "Outlook Calendar",
+  "description": "Naptár-ikon a felső sávban: kattintásra az Outlook naptár nyílik meg egy átméretezhető, natív GTK4 + WebKitGTK ablakban (méret megőrizve).",
+  "shell-version": ["45", "46", "47"],
+  "version": 1,
+  "url": "https://szabobarnabas.hu",
+  "settings-schema": "org.gnome.shell.extensions.outlook-calendar"
+}

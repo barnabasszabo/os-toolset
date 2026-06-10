@@ -22,6 +22,9 @@ function pad(n) {
 function fmtTime(d) {
     return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+function fmtClock(d) {
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
 function isSameDay(a, b) {
     return a.getFullYear() === b.getFullYear() &&
         a.getMonth() === b.getMonth() &&
@@ -192,6 +195,7 @@ class OutlookButton extends PanelMenu.Button {
             }
             const daysAhead = this._settings.get_int('days-ahead') || Config.DAYS_AHEAD;
             const meetings = await getUpcomingMeetings(token, daysAhead);
+            this._lastRefresh = new Date();
             this._updatePanel(meetings);
             this._buildMenu(meetings);
         } catch (e) {
@@ -288,7 +292,8 @@ class OutlookButton extends PanelMenu.Button {
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        const refresh = new PopupMenu.PopupMenuItem('Frissítés');
+        const stamp = this._lastRefresh ? ` (${fmtClock(this._lastRefresh)})` : '';
+        const refresh = new PopupMenu.PopupMenuItem(`Frissítés${stamp}`);
         refresh.connect('activate', () => this._refresh());
         this.menu.addMenuItem(refresh);
 

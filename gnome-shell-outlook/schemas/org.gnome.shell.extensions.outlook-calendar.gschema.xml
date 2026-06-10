@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.outlook-calendar"
+          path="/org/gnome/shell/extensions/outlook-calendar/">
+    <key name="window-width" type="i">
+      <default>1100</default>
+      <range min="400" max="10000"/>
+      <summary>A naptár-ablak utolsó szélessége</summary>
+    </key>
+    <key name="window-height" type="i">
+      <default>800</default>
+      <range min="300" max="10000"/>
+      <summary>A naptár-ablak utolsó magassága</summary>
+    </key>
+    <key name="window-maximized" type="b">
+      <default>false</default>
+      <summary>A naptár-ablak teljes méretű volt-e</summary>
+    </key>
+  </schema>
+</schemalist>
