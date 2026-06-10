@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.outlook-meetings"
+          path="/org/gnome/shell/extensions/outlook-meetings/">
+    <key name="refresh-interval-minutes" type="i">
+      <default>5</default>
+      <range min="1" max="120"/>
+      <summary>Frissítési időköz (perc)</summary>
+      <description>Milyen gyakran kérdezze le a naptárat.</description>
+    </key>
+    <key name="days-ahead" type="i">
+      <default>3</default>
+      <range min="1" max="14"/>
+      <summary>Előretekintés (nap)</summary>
+      <description>Hány napra előre mutassa a meetingeket.</description>
+    </key>
+    <key name="late-grace-minutes" type="i">
+      <default>5</default>
+      <range min="0" max="60"/>
+      <summary>Késés-kiemelés küszöb (perc)</summary>
+      <description>Egy épp futó meeting eddig a percig számít „most kezdődött"-nek és kerül színes kiemelésre.</description>
+    </key>
+    <key name="teams-open-method" type="s">
+      <choices>
+        <choice value="pwa"/>
+        <choice value="edge-app"/>
+        <choice value="default-browser"/>
+      </choices>
+      <default>'pwa'</default>
+      <summary>Teams meeting megnyitási módja</summary>
+      <description>pwa = a join-URL host-ját a Teams PWA doménjére (teams.cloud.microsoft) írjuk és a PWA-ban nyitjuk (helyes háttér, közös tárhely); edge-app = külön Edge app-ablak a nyers join-URL-lel; default-browser = alapértelmezett böngésző.</description>
+    </key>
+  </schema>
+</schemalist>

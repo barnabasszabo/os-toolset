@@ -1,0 +1,9 @@
+{
+  "uuid": "outlook-meetings@szabobarnabas.hu",
+  "name": "Outlook Meetings",
+  "description": "A következő Outlook meeting a felső sávban, legördülő listával a többi meetinghez és Teams-csatlakozás gombbal (Teams PWA).",
+  "shell-version": ["45", "46", "47"],
+  "version": 1,
+  "url": "https://szabobarnabas.hu",
+  "settings-schema": "org.gnome.shell.extensions.outlook-meetings"
+}
